@@ -36,6 +36,8 @@
       --grid: #2e2e2c; --axis: #55544f;
     }
   }
+  /* Nedersta delen av skärmen lämnas tom – där ligger Netlifys banner. */
+  :root { --bottom-reserve: 64px; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; background: var(--bg); color: var(--text);
     font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -87,7 +89,7 @@
   .chip.tag.on { background: hsl(var(--h) 60% 45%); border-color: hsl(var(--h) 60% 45%); color: #fff; }
 
   /* ---- Lista ---- */
-  ul.list { position: relative; list-style: none; margin: 0; padding: .2rem .75rem calc(3rem + env(safe-area-inset-bottom)); }
+  ul.list { position: relative; list-style: none; margin: 0; padding: .2rem .75rem calc(var(--bottom-reserve) + 2rem + env(safe-area-inset-bottom)); }
   .row { position: relative; }
   .ins { height: 18px; display: flex; align-items: center; justify-content: center; }
   .ins button { min-height: 0; height: 18px; width: 72px; padding: 0; border: 0; background: transparent;
@@ -143,7 +145,7 @@
   .menu { display: grid; gap: .5rem; padding: 1rem; }
 
   /* ---- Statistik ---- */
-  .stats { padding: .75rem .75rem calc(2rem + env(safe-area-inset-bottom)); display: grid; gap: .75rem; }
+  .stats { padding: .75rem .75rem calc(var(--bottom-reserve) + 2rem + env(safe-area-inset-bottom)); display: grid; gap: .75rem; }
   .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
   .tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .8rem; }
   .tile .v { font-size: 1.6rem; font-weight: 650; font-variant-numeric: tabular-nums; }
@@ -612,9 +614,11 @@
       inp.focus({ preventScroll: true });
       inp.setSelectionRange(inp.value.length, inp.value.length);
       const r = editing.getBoundingClientRect();
-      if (r.bottom > innerHeight - 20 || r.top < 100) editing.scrollIntoView({ block: 'center' });
+      if (r.bottom > visibleBottom() - 20 || r.top < 100) editing.scrollIntoView({ block: 'center' });
     }
   }
+  // Nederkant av den yta som inte täcks av bannern.
+  const visibleBottom = () => innerHeight - (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bottom-reserve')) || 0);
   function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
 
   function flash(id) {
@@ -622,7 +626,7 @@
     if (!el) return;
     el.classList.add('flash');
     const r = el.getBoundingClientRect(), top = document.querySelector('header.top').getBoundingClientRect().bottom;
-    if (r.top < top || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (r.top < top || r.bottom > visibleBottom()) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     setTimeout(() => el.classList.remove('flash'), 500);
   }
 
@@ -759,7 +763,7 @@
     // Autoscroll nära kanterna.
     const topEdge = document.querySelector('header.top').getBoundingClientRect().bottom;
     if (drag.y < topEdge + 50) scrollBy(0, -Math.ceil((topEdge + 50 - drag.y) / 6));
-    else if (drag.y > innerHeight - 70) scrollBy(0, Math.ceil((drag.y - innerHeight + 70) / 6));
+    else if (drag.y > visibleBottom() - 40) scrollBy(0, Math.ceil((drag.y - visibleBottom() + 40) / 6));
     positionDrag();
     drag.raf = requestAnimationFrame(dragLoop);
   }
