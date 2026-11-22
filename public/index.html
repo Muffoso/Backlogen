@@ -2,57 +2,171 @@
 <html lang="sv">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Backlogen</title>
+<meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16181c" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Backlog">
+<title>Backlog</title>
 <style>
   :root {
-    --bg: #f6f5f2; --card: #fff; --text: #1f2328; --muted: #6b7280;
-    --line: #e3e1dc; --accent: #2f6feb; --err: #c0392b; --ok: #2e7d32;
+    color-scheme: light;
+    --bg: #f6f5f2; --card: #fff; --text: #1f2328; --muted: #6b7280; --line: #e3e1dc;
+    --accent: #2f6feb; --err: #c0392b; --ok: #2e7d32;
+    --s-new-bg: #e6efff; --s-new-fg: #1d4fb8;
+    --s-open-bg: #fff1d6; --s-open-fg: #8a5a00;
+    --s-done-bg: #e3f4e5; --s-done-fg: #1f6b2a;
+    --tag-l-bg: 93%; --tag-l-fg: 30%;
+    /* diagram (referenspalett, slot 1–2) */
+    --surface-1: #fcfcfb; --series-1: #2a78d6; --series-2: #eb6834;
+    --grid: #e7e5e0; --axis: #b9b6ae;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #16181c; --card: #1f2227; --text: #e6e6e6; --muted: #9aa0a6; --line: #33373e; --accent: #6ea0ff; --err: #ff7b6b; --ok: #7ccf82; }
+    :root {
+      color-scheme: dark;
+      --bg: #16181c; --card: #1f2227; --text: #e6e6e6; --muted: #9aa0a6; --line: #33373e;
+      --accent: #6ea0ff; --err: #ff7b6b; --ok: #7ccf82;
+      --s-new-bg: #1e2f52; --s-new-fg: #a9c4ff;
+      --s-open-bg: #3d2f12; --s-open-fg: #f5c76b;
+      --s-done-bg: #1c3a22; --s-done-fg: #8fd99a;
+      --tag-l-bg: 24%; --tag-l-fg: 82%;
+      --surface-1: #1a1a19; --series-1: #3987e5; --series-2: #d95926;
+      --grid: #2e2e2c; --axis: #55544f;
+    }
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   [hidden] { display: none !important; }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card);
+    color: var(--text); border-radius: 10px; padding: .5rem .8rem; min-height: 40px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.danger { color: var(--err); }
+  button.ghost { border-color: transparent; background: transparent; }
+  button:disabled { opacity: .6; cursor: wait; }
+  input, textarea { font: inherit; font-size: 16px; padding: .65rem .75rem; border: 1px solid var(--line);
+    border-radius: 10px; background: var(--bg); color: var(--text); width: 100%; }
+  textarea { resize: vertical; }
+  .err { color: var(--err) !important; min-height: 1.2em; margin: 0; font-size: .9rem; }
 
-  .screen { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-          padding: 2rem; width: 100%; max-width: 360px; display: grid; gap: .8rem; }
+  /* ---- Inloggning ---- */
+  .screen { min-height: 100dvh; display: grid; place-items: center; padding: 1rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 1.6rem; width: 100%; max-width: 380px; display: grid; gap: .8rem; }
   .card h1 { margin: 0; font-size: 1.4rem; }
   .card p { margin: 0; color: var(--muted); font-size: .9rem; }
-  input[type=password] { font: inherit; padding: .6rem .7rem; border: 1px solid var(--line);
-          border-radius: 8px; background: var(--bg); color: var(--text); width: 100%; }
   label.check { display: flex; gap: .5rem; align-items: center; font-size: .9rem; color: var(--muted); }
-  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card);
-           color: var(--text); border-radius: 8px; padding: .35rem .7rem; }
-  button:hover { border-color: var(--accent); }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; padding: .6rem; }
-  button:disabled { opacity: .6; cursor: wait; }
-  .err { color: var(--err) !important; min-height: 1.2em; }
+  label.check input { width: auto; }
 
-  .toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: .35rem;
-             align-items: center; padding: .6rem 1rem; background: var(--card);
-             border-bottom: 1px solid var(--line); }
-  .toolbar .sep { width: 1px; height: 1.4rem; background: var(--line); margin: 0 .2rem; }
-  .toolbar .spacer { flex: 1; }
-  #status { font-size: .85rem; color: var(--muted); }
-  #status.dirty { color: var(--err); }
-  #status.saved { color: var(--ok); }
+  /* ---- App ---- */
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header.top { position: sticky; top: 0; z-index: 5; background: var(--bg);
+    padding: calc(.5rem + env(safe-area-inset-top)) .75rem .4rem; border-bottom: 1px solid var(--line); }
+  .toprow { display: flex; align-items: center; gap: .5rem; }
+  .tabs { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
+  .tabs button { border: 0; min-height: 34px; padding: .3rem .8rem; border-radius: 8px; background: transparent; color: var(--muted); }
+  .tabs button.on { background: var(--accent); color: #fff; }
+  .spacer { flex: 1; }
+  #status { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+  #status.dirty { color: var(--err); } #status.saved { color: var(--ok); }
+  #menuBtn { font-size: 1.3rem; line-height: 1; padding: 0 .7rem; }
 
-  #editor { max-width: 800px; margin: 2rem auto; padding: 2rem 2.5rem; min-height: 70vh;
-            background: var(--card); border: 1px solid var(--line); border-radius: 12px; outline: none; }
-  #editor:focus { border-color: var(--accent); }
-  #editor a { color: var(--accent); }
-  #editor h1, #editor h2 { line-height: 1.25; }
-  @media (max-width: 600px) { #editor { margin: 0; border-radius: 0; padding: 1.2rem; } }
+  .chips { display: flex; gap: .4rem; overflow-x: auto; padding: .5rem 0 .1rem; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; min-height: 34px; padding: .25rem .75rem; border-radius: 999px; font-size: .9rem;
+    border: 1px solid var(--line); background: var(--card); color: var(--text); }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .chip .n { opacity: .6; margin-left: .25rem; font-size: .8rem; }
+  .chip.tag.on { background: hsl(var(--h) 60% 45%); border-color: hsl(var(--h) 60% 45%); color: #fff; }
 
-  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); padding: 0; }
-  dialog::backdrop { background: rgba(0,0,0,.4); }
-  dialog .card { border: 0; }
-  .row { display: flex; gap: .5rem; justify-content: flex-end; }
+  ul.list { list-style: none; margin: 0; padding: .6rem .75rem calc(6rem + env(safe-area-inset-bottom)); display: grid; gap: .5rem; }
+  .item { display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .55rem .5rem .55rem .6rem;
+    transition: background-color .4s; }
+  .item.flash { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+  .item .body { min-width: 0; cursor: pointer; padding: .2rem 0; }
+  .item .title { overflow-wrap: anywhere; }
+  .item.s-done .title { color: var(--muted); text-decoration: line-through; }
+  .item .meta { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+  .item .note { color: var(--muted); font-size: .8rem; }
+  .tagchip { font-size: .75rem; padding: .05rem .5rem; border-radius: 999px;
+    background: hsl(var(--h) 60% var(--tag-l-bg)); color: hsl(var(--h) 55% var(--tag-l-fg)); }
+  .moves { display: flex; flex-direction: column; gap: .25rem; }
+  .moves button { min-height: 36px; width: 40px; padding: 0; font-size: .8rem; color: var(--muted); }
+  .moves button:disabled { opacity: .25; cursor: default; }
+
+  .pill { min-height: 36px; min-width: 70px; padding: .2rem .55rem; border-radius: 999px; border: 0;
+    font-size: .8rem; font-weight: 600; display: inline-flex; align-items: center; gap: .35rem; justify-content: center; }
+  .pill::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; border: 2px solid currentColor; }
+  .pill.s-new { background: var(--s-new-bg); color: var(--s-new-fg); }
+  .pill.s-open { background: var(--s-open-bg); color: var(--s-open-fg); }
+  .pill.s-open::before { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+  .pill.s-done { background: var(--s-done-bg); color: var(--s-done-fg); }
+  .pill.s-done::before { background: currentColor; }
+
+  .empty { text-align: center; color: var(--muted); padding: 3rem 1rem; }
+  .fab { position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: calc(1rem + env(safe-area-inset-bottom));
+    width: 60px; height: 60px; border-radius: 50%; font-size: 2rem; line-height: 1; padding: 0;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25); z-index: 4; }
+
+  /* ---- Ark (bottom sheet) och dialoger ---- */
+  dialog { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 0; }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog.sheet { width: 100%; max-width: 640px; margin: auto auto 0; border-radius: 18px 18px 0 0;
+    max-height: 92dvh; border-bottom: 0; }
+  dialog.sheet form { display: grid; gap: .75rem; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); }
+  dialog.small { border-radius: 14px; width: min(92vw, 380px); }
+  dialog.small .card { border: 0; }
+  .sheet-head { display: flex; align-items: center; gap: .5rem; }
+  .sheet-head h2 { margin: 0; font-size: 1.15rem; flex: 1; }
+  .lbl { font-size: .8rem; color: var(--muted); margin-bottom: -.4rem; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35rem; }
+  .seg button { border-radius: 10px; }
+  .seg button.on.s-new { background: var(--s-new-bg); color: var(--s-new-fg); border-color: var(--s-new-fg); font-weight: 600; }
+  .seg button.on.s-open { background: var(--s-open-bg); color: var(--s-open-fg); border-color: var(--s-open-fg); font-weight: 600; }
+  .seg button.on.s-done { background: var(--s-done-bg); color: var(--s-done-fg); border-color: var(--s-done-fg); font-weight: 600; }
+  #fTags { flex-wrap: wrap; padding: 0; }
+  .tagadd { display: flex; gap: .4rem; }
+  .tagadd button { white-space: nowrap; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .row > button { flex: 1; }
+  details summary { cursor: pointer; color: var(--muted); font-size: .9rem; }
+  details ul { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .85rem; color: var(--muted); }
+  .menu { display: grid; gap: .5rem; padding: 1rem; }
+
+  /* ---- Statistik ---- */
+  .stats { padding: .75rem .75rem calc(2rem + env(safe-area-inset-bottom)); display: grid; gap: .75rem; }
+  .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: .5rem; }
+  .tile { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .7rem .8rem; }
+  .tile .v { font-size: 1.6rem; font-weight: 650; font-variant-numeric: tabular-nums; }
+  .tile .k { font-size: .8rem; color: var(--muted); }
+  .panel { background: var(--surface-1); border: 1px solid var(--line); border-radius: 12px; padding: .8rem; }
+  .panel h3 { margin: 0; font-size: 1rem; }
+  .panel-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+  .panel-head .tabs button { min-height: 30px; font-size: .85rem; padding: .2rem .6rem; }
+  .legend { display: flex; gap: 1rem; font-size: .8rem; color: var(--muted); margin: .2rem 0 .4rem; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px;
+    margin-right: .35rem; vertical-align: -1px; background: var(--c); }
+  #chart { position: relative; touch-action: pan-y; }
+  #chart svg { display: block; overflow: visible; }
+  #chart .grid { stroke: var(--grid); stroke-width: 1; }
+  #chart .base { stroke: var(--axis); stroke-width: 1; }
+  #chart .tick { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  #chart .bar.c { fill: var(--series-1); }
+  #chart .bar.d { fill: var(--series-2); }
+  #chart svg.active .grp:not(.on) { opacity: .35; }
+  #chart .hit { fill: transparent; cursor: pointer; }
+  .tip { position: absolute; top: 0; pointer-events: none; background: var(--card); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px; padding: .35rem .55rem; font-size: .8rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.15); white-space: nowrap; }
+  .tip b { display: block; margin-bottom: .1rem; }
+  .tip i { font-style: normal; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: .3rem; }
+  table.data { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; margin-top: .4rem; }
+  table.data th, table.data td { text-align: right; padding: .25rem .4rem; border-bottom: 1px solid var(--line); }
+  table.data th:first-child, table.data td:first-child { text-align: left; }
+  table.data th { color: var(--muted); font-weight: 500; }
 </style>
 </head>
 <body>
@@ -61,7 +175,7 @@
 
 <div id="lock" class="screen" hidden>
   <form id="lockForm" class="card">
-    <h1>Backlogen</h1>
+    <h1>Backlog</h1>
     <p id="lockHint">Ange lösenord för att visa innehållet.</p>
     <input type="password" id="pw" placeholder="Lösenord" autocomplete="current-password" required>
     <input type="password" id="pw2" placeholder="Upprepa lösenord" autocomplete="new-password" hidden>
@@ -72,36 +186,84 @@
 </div>
 
 <div id="app" hidden>
-  <div class="toolbar">
-    <button data-cmd="bold" title="Fet (Ctrl+B)"><b>B</b></button>
-    <button data-cmd="italic" title="Kursiv (Ctrl+I)"><i>I</i></button>
-    <button data-cmd="underline" title="Understruken (Ctrl+U)"><u>U</u></button>
-    <span class="sep"></span>
-    <button data-block="H1" title="Rubrik 1">H1</button>
-    <button data-block="H2" title="Rubrik 2">H2</button>
-    <button data-block="P" title="Brödtext">¶</button>
-    <span class="sep"></span>
-    <button data-cmd="insertUnorderedList" title="Punktlista">• Lista</button>
-    <button data-cmd="insertOrderedList" title="Numrerad lista">1. Lista</button>
-    <button id="linkBtn" title="Länk (Ctrl+klick för att öppna)">Länk</button>
-    <button data-cmd="removeFormat" title="Rensa formatering">⌫ Format</button>
-    <span class="spacer"></span>
-    <span id="status"></span>
-    <button id="pwBtn">Byt lösenord</button>
-    <button id="logoutBtn">Logga ut</button>
-  </div>
-  <main id="editor" contenteditable="true" spellcheck="true"></main>
+  <header class="top"><div class="wrap">
+    <div class="toprow">
+      <div class="tabs" id="viewTabs">
+        <button data-view="list" class="on">Backlog</button>
+        <button data-view="stats">Statistik</button>
+      </div>
+      <span class="spacer"></span>
+      <span id="status"></span>
+      <button id="menuBtn" class="ghost" aria-label="Meny">⋯</button>
+    </div>
+    <div id="filters">
+      <div class="chips" id="statusFilter"></div>
+      <div class="chips" id="tagFilter"></div>
+    </div>
+  </div></header>
+
+  <main class="wrap">
+    <section id="listView">
+      <ul class="list" id="list"></ul>
+    </section>
+    <section id="statsView" class="stats" hidden></section>
+  </main>
+
+  <button class="fab primary" id="addBtn" aria-label="Nytt item">+</button>
 </div>
 
-<dialog id="pwDialog">
-  <form method="dialog" class="card" id="pwForm">
+<!-- Skapa / redigera item -->
+<dialog id="sheet" class="sheet">
+  <form id="itemForm">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Nytt item</h2>
+      <button type="button" class="ghost" id="sheetClose" aria-label="Stäng">✕</button>
+    </div>
+    <input id="fTitle" placeholder="Vad behöver göras?" maxlength="300" autocomplete="off" required>
+    <textarea id="fNotes" rows="3" placeholder="Anteckningar (valfritt)"></textarea>
+    <div class="lbl">Status</div>
+    <div class="seg" id="fStatus">
+      <button type="button" data-s="new" class="s-new">New</button>
+      <button type="button" data-s="open" class="s-open">Open</button>
+      <button type="button" data-s="done" class="s-done">Done</button>
+    </div>
+    <div class="lbl">Taggar</div>
+    <div class="chips" id="fTags"></div>
+    <div class="tagadd">
+      <input id="fNewTag" placeholder="Ny tagg" maxlength="30" autocomplete="off" enterkeyhint="done">
+      <button type="button" id="fAddTag">Lägg till</button>
+    </div>
+    <div class="row" id="fMoves">
+      <button type="button" data-move="top">⤒ Flytta överst</button>
+      <button type="button" data-move="bottom">⤓ Flytta nederst</button>
+    </div>
+    <details id="fHistory"><summary>Historik</summary><ul></ul></details>
+    <div class="row">
+      <button type="button" class="danger" id="fDelete">Ta bort</button>
+      <button type="submit" class="primary">Spara</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Meny -->
+<dialog id="menu" class="small">
+  <div class="menu">
+    <button id="pwBtn">Byt lösenord</button>
+    <button id="logoutBtn">Logga ut</button>
+    <button id="menuClose" class="ghost">Stäng</button>
+  </div>
+</dialog>
+
+<!-- Byt lösenord -->
+<dialog id="pwDialog" class="small">
+  <form class="card" id="pwForm">
     <h1>Byt lösenord</h1>
     <input type="password" id="newPw" placeholder="Nytt lösenord" autocomplete="new-password" required>
     <input type="password" id="newPw2" placeholder="Upprepa nytt lösenord" autocomplete="new-password" required>
     <p class="err" id="pwErr"></p>
     <div class="row">
       <button type="button" id="pwCancel">Avbryt</button>
-      <button type="submit" class="primary" style="padding:.35rem .9rem" id="pwSubmit">Byt</button>
+      <button type="submit" class="primary" id="pwSubmit">Byt</button>
     </div>
   </form>
 </dialog>
@@ -111,9 +273,9 @@
   'use strict';
   const ITERATIONS = 600000;
   const STORE = 'backlogen-auth';
-  const AUTOSAVE_MS = 1500;
+  const AUTOSAVE_MS = 1000;
   const $ = id => document.getElementById(id);
-  const editor = $('editor');
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   const enc = new TextEncoder(), dec = new TextDecoder();
   const b64 = buf => {
@@ -125,10 +287,13 @@
 
   // auth = { salt, iter, key (CryptoKey), keyRaw (b64), token (b64) }
   const state = { auth: null, version: 0, dirty: false, saving: false, timer: null };
+  let data = null;
 
   function show(id) { ['loading', 'lock', 'app'].forEach(s => { $(s).hidden = s !== id; }); }
 
-  // ---------- Kryptering ----------
+  // =====================================================================
+  //  Kryptering, inloggning och lagring
+  // =====================================================================
   // Lösenordet ger 512 bitar: första halvan är krypteringsnyckel, andra halvan åtkomsttoken till servern.
   async function deriveAuth(pw, salt, iter) {
     const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
@@ -149,7 +314,6 @@
     return dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p.iv) }, auth.key, unb64(p.data)));
   }
 
-  // ---------- Kom ihåg mig ----------
   function remember(auth) {
     try { localStorage.setItem(STORE, JSON.stringify({ salt: auth.salt, iter: auth.iter, keyRaw: auth.keyRaw, token: auth.token })); } catch {}
   }
@@ -163,39 +327,41 @@
     } catch { return null; }
   }
 
-  // ---------- Server ----------
   async function api(method, path, auth, body) {
     const headers = { 'content-type': 'application/json' };
     if (auth) headers.authorization = 'Bearer ' + auth.token;
     const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
-    let data = null; try { data = await res.json(); } catch {}
-    return { status: res.status, ok: res.ok, data };
+    let d = null; try { d = await res.json(); } catch {}
+    return { status: res.status, ok: res.ok, data: d };
   }
 
   async function openDoc(auth) {
     const r = await api('GET', '/api/doc', auth);
     if (r.status === 401) return false;
     if (!r.ok) throw new Error('Serverfel (' + r.status + ')');
-    editor.innerHTML = await decrypt(auth, r.data);
+    data = parseData(await decrypt(auth, r.data));
     state.auth = auth;
     state.version = r.data.version;
     setStatus('Sparat', 'saved');
     show('app');
-    editor.focus();
+    render();
     return true;
   }
 
-  // ---------- Start ----------
   let meta = null;
   async function start() {
     if (!window.crypto || !crypto.subtle) {
       show('lock'); $('lockErr').textContent = 'Webbläsaren saknar stöd för kryptering (kräver https).';
       $('lockBtn').disabled = true; return;
     }
-    const r = await api('GET', '/api/meta');
-    if (!r.ok) { show('lock'); $('lockErr').textContent = 'Kunde inte nå servern.'; $('lockBtn').disabled = true; return; }
+    let r;
+    try { r = await api('GET', '/api/meta'); } catch (ex) { r = { ok: false, status: 0, data: { error: ex.message } }; }
+    if (!r.ok || !r.data) {
+      show('lock');
+      $('lockErr').textContent = 'Kunde inte nå servern (status ' + r.status + (r.data && r.data.error ? ', ' + r.data.error : '') + ').';
+      $('lockBtn').disabled = true; return;
+    }
     meta = r.data;
-
     if (!meta.initialized) {
       $('lockHint').textContent = 'Första gången. Välj ett lösenord (gärna en lång fras) som skyddar innehållet.';
       $('pw').autocomplete = 'new-password';
@@ -222,8 +388,8 @@
       if (!meta.initialized) {
         const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
         const auth = await deriveAuth(pw, salt, ITERATIONS);
-        const html = '<h1>Backlogen</h1><p>Börja skriva här…</p>';
-        const r = await api('POST', '/api/doc', null, { salt, iter: ITERATIONS, token: auth.token, ...(await encrypt(auth, html)) });
+        const r = await api('POST', '/api/doc', null,
+          { salt, iter: ITERATIONS, token: auth.token, ...(await encrypt(auth, JSON.stringify(emptyData()))) });
         if (r.status === 409) { err.textContent = 'Sidan har redan skapats. Ladda om.'; return; }
         if (!r.ok) throw new Error('Serverfel (' + r.status + ')');
         meta = { initialized: true, salt, iter: ITERATIONS };
@@ -242,12 +408,11 @@
     }
   });
 
-  // ---------- Spara ----------
   function setStatus(text, cls) { const s = $('status'); s.textContent = text; s.className = cls || ''; }
 
   function scheduleSave() {
     state.dirty = true;
-    setStatus('Osparade ändringar', 'dirty');
+    setStatus('Osparat', 'dirty');
     clearTimeout(state.timer);
     state.timer = setTimeout(save, AUTOSAVE_MS);
   }
@@ -264,13 +429,13 @@
     setStatus('Sparar…');
     try {
       const target = newAuth || state.auth;
-      const body = { ...(await encrypt(target, editor.innerHTML)), baseVersion: state.version };
+      const body = { ...(await encrypt(target, JSON.stringify(data))), baseVersion: state.version };
       if (newAuth) body.newAuth = { salt: newAuth.salt, iter: newAuth.iter, token: newAuth.token };
       const r = await api('PUT', '/api/doc', state.auth, body);
 
       if (r.status === 409) {
         state.dirty = true;
-        const overwrite = confirm('Sidan har ändrats på en annan enhet sedan du öppnade den.\n\n' +
+        const overwrite = confirm('Backloggen har ändrats på en annan enhet sedan du öppnade den.\n\n' +
           'OK = skriv över med din version\nAvbryt = ladda om och visa den senaste versionen (dina senaste ändringar försvinner)');
         if (overwrite) { state.version = r.data.version; state.saving = false; return save(newAuth); }
         state.dirty = false; location.reload(); return;
@@ -284,11 +449,11 @@
 
       state.version = r.data.version;
       if (newAuth) { state.auth = newAuth; meta.salt = newAuth.salt; meta.iter = newAuth.iter; }
-      if (!state.dirty) setStatus('Sparat ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }), 'saved');
+      if (!state.dirty) setStatus('Sparat', 'saved');
       return true;
     } catch (ex) {
       state.dirty = true;
-      setStatus('Kunde inte spara – försöker igen', 'dirty');
+      setStatus('Ej sparat – försöker igen', 'dirty');
       state.timer = setTimeout(save, 5000);
       if (newAuth) throw ex;
     } finally {
@@ -296,36 +461,385 @@
     }
   }
 
-  document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); if (state.dirty) save(); }
-  });
   window.addEventListener('beforeunload', e => { if (state.dirty || state.saving) { e.preventDefault(); e.returnValue = ''; } });
+  // Spara direkt när appen läggs i bakgrunden på mobilen.
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.dirty) save(); });
 
-  // ---------- Redigering ----------
-  editor.addEventListener('input', scheduleSave);
-  editor.addEventListener('paste', e => {
+  // =====================================================================
+  //  Datamodell
+  // =====================================================================
+  // data = { v: 2, items: [{ id, title, notes, tags[], status, created, updated }], log: [{ t, id, from, to }] }
+  // Listans ordning = prioritet. Loggen får en rad när ett item skapas (from: null),
+  // vid varje statusbyte och när ett item tas bort (to: 'deleted').
+  const STATUSES = ['new', 'open', 'done'];
+  const LABEL = { new: 'New', open: 'Open', done: 'Done', deleted: 'Borttagen' };
+  const NEXT = { new: 'open', open: 'done', done: 'open' };
+  const now = () => new Date().toISOString();
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+  function emptyData() { return { v: 2, items: [], log: [] }; }
+  function parseData(text) {
+    try {
+      const d = JSON.parse(text);
+      if (d && Array.isArray(d.items) && Array.isArray(d.log)) return d;
+    } catch {}
+    // Äldre version av sidan sparade fri HTML-text – ta med den som ett item om den inte är tom.
+    const d = emptyData();
+    const plain = String(text || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (plain && !/^Backlogen Börja skriva här/.test(plain)) {
+      const t = now();
+      const it = { id: uid(), title: 'Importerad anteckning', notes: plain, tags: [], status: 'new', created: t, updated: t };
+      d.items.push(it); d.log.push({ t, id: it.id, from: null, to: 'new' });
+    }
+    return d;
+  }
+
+  function addItem(title, notes, tags, status) {
+    const t = now();
+    const it = { id: uid(), title, notes, tags, status: 'new', created: t, updated: t };
+    data.items.unshift(it);
+    data.log.push({ t, id: it.id, from: null, to: 'new' });
+    if (status !== 'new') setItemStatus(it, status);
+    return it;
+  }
+  function setItemStatus(it, to) {
+    if (it.status === to) return;
+    const t = now();
+    data.log.push({ t, id: it.id, from: it.status, to });
+    it.status = to; it.updated = t;
+  }
+  function deleteItem(it) {
+    data.log.push({ t: now(), id: it.id, from: it.status, to: 'deleted' });
+    data.items = data.items.filter(x => x !== it);
+  }
+  const byId = id => data.items.find(x => x.id === id);
+  function commit() { render(); scheduleSave(); }
+
+  function normTag(s) { return s.trim().replace(/^#+/, '').replace(/\s+/g, ' ').toLowerCase().slice(0, 30); }
+  function tagHue(tag) { let h = 0; for (const c of tag) h = (h * 31 + c.codePointAt(0)) % 360; return h; }
+  function allTags() {
+    const m = new Map();
+    data.items.forEach(it => it.tags.forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'sv'));
+  }
+
+  // =====================================================================
+  //  Lista
+  // =====================================================================
+  const ui = { view: 'list', status: 'active', tags: new Set(), editing: null, sheetTags: new Set(), sheetStatus: 'new', period: 'week' };
+  const STATUS_FILTERS = [['active', 'Aktiva'], ['new', 'New'], ['open', 'Open'], ['done', 'Done'], ['all', 'Alla']];
+
+  function matchesStatus(it, f) { return f === 'all' || (f === 'active' ? it.status !== 'done' : it.status === f); }
+  function matchesTags(it) { for (const t of ui.tags) if (!it.tags.includes(t)) return false; return true; }
+  function visibleItems() { return data.items.filter(it => matchesStatus(it, ui.status) && matchesTags(it)); }
+
+  function render() {
+    if (!data) return;
+    $('filters').hidden = ui.view !== 'list';
+    $('listView').hidden = ui.view !== 'list';
+    $('statsView').hidden = ui.view !== 'stats';
+    $('addBtn').hidden = ui.view !== 'list';
+    document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('on', b.dataset.view === ui.view));
+    if (ui.view === 'stats') { renderStats(); return; }
+
+    // Statusfilter (antal räknas inom valda taggar)
+    const tagged = data.items.filter(matchesTags);
+    $('statusFilter').innerHTML = STATUS_FILTERS.map(([k, l]) =>
+      `<button class="chip${ui.status === k ? ' on' : ''}" data-status="${k}">${l}<span class="n">${tagged.filter(it => matchesStatus(it, k)).length}</span></button>`
+    ).join('');
+
+    // Taggfilter
+    const tags = allTags();
+    for (const t of [...ui.tags]) if (!tags.some(([n]) => n === t)) ui.tags.delete(t);
+    $('tagFilter').hidden = tags.length === 0;
+    $('tagFilter').innerHTML = (ui.tags.size ? '<button class="chip" data-cleartags>✕ Rensa</button>' : '') +
+      tags.map(([t, n]) => `<button class="chip tag${ui.tags.has(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}<span class="n">${n}</span></button>`).join('');
+
+    // Items
+    const vis = visibleItems();
+    if (!vis.length) {
+      $('list').innerHTML = `<li class="empty">${data.items.length ? 'Inga items matchar filtret.' : 'Backloggen är tom.<br>Tryck på + för att lägga till ett item.'}</li>`;
+      return;
+    }
+    $('list').innerHTML = vis.map((it, i) => `
+      <li class="item s-${it.status}" data-id="${it.id}">
+        <button class="pill s-${it.status}" data-act="cycle" aria-label="Status ${LABEL[it.status]}, tryck för att ändra">${LABEL[it.status]}</button>
+        <div class="body" data-act="edit">
+          <div class="title">${esc(it.title)}</div>
+          ${it.tags.length || it.notes ? `<div class="meta">${it.tags.map(t => `<span class="tagchip" style="--h:${tagHue(t)}">#${esc(t)}</span>`).join('')}${it.notes ? '<span class="note">📝</span>' : ''}</div>` : ''}
+        </div>
+        <div class="moves">
+          <button data-act="up" aria-label="Flytta upp"${i === 0 ? ' disabled' : ''}>▲</button>
+          <button data-act="down" aria-label="Flytta ner"${i === vis.length - 1 ? ' disabled' : ''}>▼</button>
+        </div>
+      </li>`).join('');
+  }
+
+  // Flytta ett steg upp/ner bland de synliga items (hoppar över dolda items i den filtrerade vyn).
+  function move(id, dir) {
+    const vis = visibleItems();
+    const i = vis.findIndex(x => x.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= vis.length) return;
+    const it = vis[i], neighbor = vis[j];
+    data.items.splice(data.items.indexOf(it), 1);
+    const n = data.items.indexOf(neighbor);
+    data.items.splice(dir < 0 ? n : n + 1, 0, it);
+    commit();
+    flash(id);
+  }
+  function flash(id) {
+    const el = document.querySelector(`.item[data-id="${id}"]`);
+    if (!el) return;
+    el.classList.add('flash');
+    const r = el.getBoundingClientRect(), top = $('app').querySelector('header').getBoundingClientRect().bottom;
+    if (r.top < top || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    setTimeout(() => el.classList.remove('flash'), 500);
+  }
+
+  $('list').addEventListener('click', e => {
+    const actEl = e.target.closest('[data-act]'); if (!actEl) return;
+    const id = actEl.closest('.item').dataset.id, it = byId(id);
+    const act = actEl.dataset.act;
+    if (act === 'up') move(id, -1);
+    else if (act === 'down') move(id, 1);
+    else if (act === 'cycle') { setItemStatus(it, NEXT[it.status]); commit(); flash(id); }
+    else if (act === 'edit') openSheet(it);
+  });
+  $('statusFilter').addEventListener('click', e => {
+    const b = e.target.closest('[data-status]'); if (!b) return;
+    ui.status = b.dataset.status; render();
+  });
+  $('tagFilter').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-cleartags')) ui.tags.clear();
+    else { const t = b.dataset.tag; ui.tags.has(t) ? ui.tags.delete(t) : ui.tags.add(t); }
+    render();
+  });
+  $('viewTabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-view]'); if (!b) return;
+    ui.view = b.dataset.view; render(); scrollTo(0, 0);
+  });
+
+  // =====================================================================
+  //  Skapa / redigera
+  // =====================================================================
+  const sheet = $('sheet');
+  function openSheet(it) {
+    ui.editing = it || null;
+    $('sheetTitle').textContent = it ? 'Redigera' : 'Nytt item';
+    $('fTitle').value = it ? it.title : '';
+    $('fNotes').value = it ? it.notes || '' : '';
+    $('fNewTag').value = '';
+    ui.sheetStatus = it ? it.status : (['new', 'open', 'done'].includes(ui.status) ? ui.status : 'new');
+    ui.sheetTags = new Set(it ? it.tags : ui.tags);
+    $('fMoves').hidden = $('fDelete').hidden = $('fHistory').hidden = !it;
+    if (it) {
+      const fmt = t => new Date(t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
+      $('fHistory').querySelector('ul').innerHTML = data.log.filter(l => l.id === it.id).reverse()
+        .map(l => `<li>${fmt(l.t)}: ${l.from ? `${LABEL[l.from]} → ${LABEL[l.to]}` : 'Skapad'}</li>`).join('');
+      $('fHistory').open = false;
+    }
+    renderSheet();
+    sheet.showModal();
+    if (!it) $('fTitle').focus();
+  }
+  function renderSheet() {
+    document.querySelectorAll('#fStatus button').forEach(b => b.classList.toggle('on', b.dataset.s === ui.sheetStatus));
+    const tags = new Set([...allTags().map(([t]) => t), ...ui.sheetTags]);
+    $('fTags').innerHTML = [...tags].sort((a, b) => a.localeCompare(b, 'sv')).map(t =>
+      `<button type="button" class="chip tag${ui.sheetTags.has(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')
+      || '<span class="note" style="color:var(--muted);font-size:.85rem">Inga taggar än – skriv en nedan.</span>';
+  }
+  function addSheetTag() {
+    const raw = $('fNewTag').value;
+    raw.split(',').map(normTag).filter(Boolean).forEach(t => ui.sheetTags.add(t));
+    $('fNewTag').value = '';
+    renderSheet();
+  }
+  $('fStatus').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { ui.sheetStatus = b.dataset.s; renderSheet(); } });
+  $('fTags').addEventListener('click', e => {
+    const b = e.target.closest('[data-tag]'); if (!b) return;
+    const t = b.dataset.tag; ui.sheetTags.has(t) ? ui.sheetTags.delete(t) : ui.sheetTags.add(t); renderSheet();
+  });
+  $('fAddTag').addEventListener('click', addSheetTag);
+  $('fNewTag').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSheetTag(); } });
+  $('sheetClose').addEventListener('click', () => sheet.close());
+  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); }); // tryck utanför arket
+
+  $('itemForm').addEventListener('submit', e => {
     e.preventDefault();
-    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+    if ($('fNewTag').value.trim()) addSheetTag();
+    const title = $('fTitle').value.trim();
+    if (!title) { $('fTitle').focus(); return; }
+    const notes = $('fNotes').value.trim(), tags = [...ui.sheetTags];
+    let it = ui.editing;
+    if (it) {
+      it.title = title; it.notes = notes; it.tags = tags; it.updated = now();
+      setItemStatus(it, ui.sheetStatus);
+    } else {
+      it = addItem(title, notes, tags, ui.sheetStatus);
+    }
+    sheet.close();
+    commit();
+    flash(it.id);
   });
-  editor.addEventListener('click', e => {
-    const a = e.target.closest('a');
-    if (a && (e.ctrlKey || e.metaKey)) window.open(a.href, '_blank', 'noopener');
+  $('fDelete').addEventListener('click', () => {
+    if (!ui.editing || !confirm('Ta bort "' + ui.editing.title + '"?')) return;
+    deleteItem(ui.editing); sheet.close(); commit();
   });
-  document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
-    document.execCommand(b.dataset.cmd); editor.focus(); scheduleSave();
-  }));
-  document.querySelectorAll('[data-block]').forEach(b => b.addEventListener('click', () => {
-    document.execCommand('formatBlock', false, b.dataset.block); editor.focus(); scheduleSave();
-  }));
-  $('linkBtn').addEventListener('click', () => {
-    const url = prompt('Länkadress:', 'https://');
-    if (url) { document.execCommand('createLink', false, url); scheduleSave(); }
-    editor.focus();
+  $('fMoves').addEventListener('click', e => {
+    const b = e.target.closest('[data-move]'); if (!b || !ui.editing) return;
+    const it = ui.editing;
+    data.items.splice(data.items.indexOf(it), 1);
+    b.dataset.move === 'top' ? data.items.unshift(it) : data.items.push(it);
+    sheet.close(); commit(); flash(it.id);
   });
+  $('addBtn').addEventListener('click', () => openSheet(null));
 
-  // ---------- Lösenord / utloggning ----------
-  const dlg = $('pwDialog');
-  $('pwBtn').addEventListener('click', () => { $('pwErr').textContent = ''; dlg.showModal(); $('newPw').focus(); });
+  // =====================================================================
+  //  Statistik
+  // =====================================================================
+  function startOfWeek(d) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
+  function isoWeek(d) {
+    const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    x.setUTCDate(x.getUTCDate() + 4 - (x.getUTCDay() || 7));
+    return Math.ceil(((x - Date.UTC(x.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+  }
+  const MONTHS = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+
+  function buckets(period, n = 12) {
+    const today = new Date(), out = [];
+    for (let i = n - 1; i >= 0; i--) {
+      let s, e, short, long;
+      if (period === 'week') {
+        s = startOfWeek(today); s.setDate(s.getDate() - 7 * i);
+        e = new Date(s); e.setDate(e.getDate() + 7);
+        short = 'v' + isoWeek(s); long = 'Vecka ' + isoWeek(s) + ', ' + s.getFullYear();
+      } else {
+        s = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        e = new Date(s.getFullYear(), s.getMonth() + 1, 1);
+        short = MONTHS[s.getMonth()]; long = MONTHS[s.getMonth()] + ' ' + s.getFullYear();
+      }
+      out.push({ s: +s, e: +e, short, long, created: 0, done: 0 });
+    }
+    for (const l of data.log) {
+      const t = +new Date(l.t);
+      const b = out.find(b => t >= b.s && t < b.e); if (!b) continue;
+      if (l.from === null) b.created++;
+      else if (l.to === 'done') b.done++;
+    }
+    return out;
+  }
+
+  function renderStats() {
+    const created = data.log.filter(l => l.from === null).length;
+    const doneCount = data.items.filter(it => it.status === 'done').length;
+    const remaining = data.items.filter(it => it.status !== 'done').length;
+    // Ledtid: från skapad till senaste "done" för items som är klara nu.
+    const lastDone = new Map();
+    data.log.forEach(l => { if (l.to === 'done') lastDone.set(l.id, l.t); });
+    const leads = data.items.filter(it => it.status === 'done' && lastDone.has(it.id))
+      .map(it => (new Date(lastDone.get(it.id)) - new Date(it.created)) / 864e5).sort((a, b) => a - b);
+    const median = leads.length ? leads[Math.floor(leads.length / 2)] : null;
+    const fmtDays = d => d == null ? '–' : d < 1 ? '< 1 dag' : Math.round(d) + (Math.round(d) === 1 ? ' dag' : ' dagar');
+
+    const bs = buckets(ui.period);
+    $('statsView').innerHTML = `
+      <div class="tiles">
+        <div class="tile"><div class="v">${created}</div><div class="k">Skapade totalt</div></div>
+        <div class="tile"><div class="v">${doneCount}</div><div class="k">Klara (Done)</div></div>
+        <div class="tile"><div class="v">${remaining}</div><div class="k">Kvar (New + Open)</div></div>
+        <div class="tile"><div class="v">${fmtDays(median)}</div><div class="k">Mediantid till Done</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Skapade och klarade</h3><span class="spacer"></span>
+          <div class="tabs" id="periodTabs">
+            <button data-p="week" class="${ui.period === 'week' ? 'on' : ''}">Vecka</button>
+            <button data-p="month" class="${ui.period === 'month' ? 'on' : ''}">Månad</button>
+          </div>
+        </div>
+        <div class="legend"><span style="--c:var(--series-1)">Skapade</span><span style="--c:var(--series-2)">Klarade</span></div>
+        <div id="chart"></div>
+        <details><summary>Visa som tabell</summary>
+          <table class="data"><thead><tr><th>${ui.period === 'week' ? 'Vecka' : 'Månad'}</th><th>Skapade</th><th>Klarade</th></tr></thead>
+          <tbody>${bs.slice().reverse().map(b => `<tr><td>${b.long}</td><td>${b.created}</td><td>${b.done}</td></tr>`).join('')}</tbody></table>
+        </details>
+      </div>`;
+    $('periodTabs').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) { ui.period = b.dataset.p; renderStats(); } });
+    renderChart(bs);
+  }
+
+  function niceStep(max) {
+    const raw = max / 4, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    for (const f of [1, 2, 5, 10]) if (f * p >= raw) return Math.max(1, f * p);
+    return Math.max(1, 10 * p);
+  }
+  function barPath(x, y, w, h) {
+    if (h <= 0) return '';
+    const r = Math.min(4, w / 2, h);
+    return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+  }
+  function renderChart(bs) {
+    const wrap = $('chart'); if (!wrap) return;
+    const W = Math.max(260, wrap.clientWidth), H = 190;
+    const m = { l: 26, r: 4, t: 8, b: 22 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const max = Math.max(1, ...bs.map(b => Math.max(b.created, b.done)));
+    const step = niceStep(max), top = Math.ceil(max / step) * step;
+    const gw = iw / bs.length, bw = Math.max(3, Math.min(16, (gw - 8) / 2 - 1));
+    const y = v => m.t + ih - (v / top) * ih;
+    const every = Math.max(1, Math.ceil(30 / gw));
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Skapade och klarade items per ${ui.period === 'week' ? 'vecka' : 'månad'}">`;
+    for (let v = step; v <= top; v += step)
+      s += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text class="tick" x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    bs.forEach((b, i) => {
+      const cx = m.l + gw * i + gw / 2;
+      s += `<g class="grp" data-i="${i}">` +
+        `<path class="bar c" d="${barPath(cx - 1 - bw, y(b.created), bw, y(0) - y(b.created))}"/>` +
+        `<path class="bar d" d="${barPath(cx + 1, y(b.done), bw, y(0) - y(b.done))}"/></g>`;
+      if ((bs.length - 1 - i) % every === 0) s += `<text class="tick" x="${cx}" y="${H - 6}" text-anchor="middle">${b.short}</text>`;
+    });
+    s += `<line class="base" x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}"/>`;
+    s += `<rect class="hit" x="${m.l}" y="0" width="${iw}" height="${H}"/></svg><div class="tip" hidden></div>`;
+    wrap.innerHTML = s;
+
+    const svg = wrap.querySelector('svg'), tip = wrap.querySelector('.tip');
+    const showAt = clientX => {
+      const r = svg.getBoundingClientRect();
+      const i = Math.min(bs.length - 1, Math.max(0, Math.floor((clientX - r.left - m.l) / gw)));
+      const b = bs[i];
+      svg.classList.add('active');
+      svg.querySelectorAll('.grp').forEach(g => g.classList.toggle('on', +g.dataset.i === i));
+      tip.innerHTML = `<b>${b.long}</b><i style="background:var(--series-1)"></i>Skapade ${b.created}<br><i style="background:var(--series-2)"></i>Klarade ${b.done}`;
+      tip.hidden = false;
+      // Placera tooltip bredvid staplarna så att den inte täcker dem.
+      const cx = m.l + gw * i + gw / 2, tw = tip.offsetWidth;
+      const left = cx > W / 2 ? cx - gw / 2 - tw - 4 : cx + gw / 2 + 4;
+      tip.style.left = Math.min(W - tw, Math.max(0, left)) + 'px';
+      tip.style.top = m.t + 'px';
+    };
+    const hide = () => { svg.classList.remove('active'); tip.hidden = true; };
+    svg.addEventListener('pointermove', e => { if (e.pointerType === 'mouse') showAt(e.clientX); });
+    svg.addEventListener('pointerdown', e => showAt(e.clientX));
+    svg.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hide(); });
+  }
+  // Tryck utanför diagrammet döljer tooltip.
+  document.addEventListener('pointerdown', e => {
+    const w = $('chart'); if (!w || w.contains(e.target)) return;
+    const svg = w.querySelector('svg'), tip = w.querySelector('.tip');
+    if (svg) svg.classList.remove('active'); if (tip) tip.hidden = true;
+  });
+  let resizeT;
+  addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (ui.view === 'stats' && data) renderStats(); }, 150); });
+
+  // =====================================================================
+  //  Meny, lösenord, utloggning
+  // =====================================================================
+  const menu = $('menu'), dlg = $('pwDialog');
+  $('menuBtn').addEventListener('click', () => menu.showModal());
+  $('menuClose').addEventListener('click', () => menu.close());
+  menu.addEventListener('click', e => { if (e.target === menu) menu.close(); });
+  $('pwBtn').addEventListener('click', () => { menu.close(); $('pwErr').textContent = ''; dlg.showModal(); $('newPw').focus(); });
   $('pwCancel').addEventListener('click', () => dlg.close());
   $('pwForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -340,7 +854,7 @@
         if (wasRemembered) remember(newAuth); else forget();
         $('newPw').value = $('newPw2').value = '';
         dlg.close();
-        setStatus('Lösenordet är bytt', 'saved');
+        setStatus('Lösenord bytt', 'saved');
       }
     } catch (ex) {
       $('pwErr').textContent = 'Kunde inte byta lösenord: ' + (ex.message || ex);
@@ -348,8 +862,8 @@
       btn.disabled = false;
     }
   });
-
   $('logoutBtn').addEventListener('click', async () => {
+    menu.close();
     if (state.dirty) await save();
     forget();
     location.reload();
