@@ -46,7 +46,7 @@
   button.danger { color: var(--err); }
   button.ghost { border-color: transparent; background: transparent; }
   button:disabled { opacity: .6; cursor: wait; }
-  input, textarea { font: inherit; font-size: 16px; padding: .65rem .75rem; border: 1px solid var(--line);
+  input, textarea, select { font: inherit; font-size: 16px; padding: .65rem .75rem; border: 1px solid var(--line);
     border-radius: 10px; background: var(--bg); color: var(--text); width: 100%; }
   textarea { resize: vertical; }
   .err { color: var(--err) !important; min-height: 1.2em; margin: 0; font-size: .9rem; }
@@ -63,7 +63,7 @@
   /* ---- App ---- */
   .wrap { max-width: 640px; margin: 0 auto; }
   header.top { position: sticky; top: 0; z-index: 5; background: var(--bg);
-    padding: calc(.5rem + env(safe-area-inset-top)) .75rem .4rem; border-bottom: 1px solid var(--line); }
+    padding: calc(.5rem + env(safe-area-inset-top)) .75rem .5rem; border-bottom: 1px solid var(--line); }
   .toprow { display: flex; align-items: center; gap: .5rem; }
   .tabs { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 2px; }
   .tabs button { border: 0; min-height: 34px; padding: .3rem .8rem; border-radius: 8px; background: transparent; color: var(--muted); }
@@ -73,65 +73,71 @@
   #status.dirty { color: var(--err); } #status.saved { color: var(--ok); }
   #menuBtn { font-size: 1.3rem; line-height: 1; padding: 0 .7rem; }
 
-  .chips { display: flex; gap: .4rem; overflow-x: auto; padding: .5rem 0 .1rem; scrollbar-width: none; }
+  .filterrow { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; }
+  #statusSelect { width: auto; flex: none; padding: .4rem 2rem .4rem .7rem; min-height: 36px; background-color: var(--card);
+    appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: right .95rem center, right .65rem center; background-size: 5px 5px; background-repeat: no-repeat; }
+  .chips { display: flex; gap: .4rem; overflow-x: auto; scrollbar-width: none; min-width: 0; }
   .chips::-webkit-scrollbar { display: none; }
+  .chips.wrapping { flex-wrap: wrap; overflow: visible; }
   .chip { flex: none; min-height: 34px; padding: .25rem .75rem; border-radius: 999px; font-size: .9rem;
     border: 1px solid var(--line); background: var(--card); color: var(--text); }
-  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
   .chip .n { opacity: .6; margin-left: .25rem; font-size: .8rem; }
   .chip.tag.on { background: hsl(var(--h) 60% 45%); border-color: hsl(var(--h) 60% 45%); color: #fff; }
 
-  ul.list { list-style: none; margin: 0; padding: .6rem .75rem calc(6rem + env(safe-area-inset-bottom)); display: grid; gap: .5rem; }
-  .item { display: grid; grid-template-columns: auto 1fr auto; gap: .6rem; align-items: center;
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .55rem .5rem .55rem .6rem;
+  /* ---- Lista ---- */
+  ul.list { position: relative; list-style: none; margin: 0; padding: .2rem .75rem calc(3rem + env(safe-area-inset-bottom)); }
+  .row { position: relative; }
+  .ins { height: 18px; display: flex; align-items: center; justify-content: center; }
+  .ins button { min-height: 0; height: 18px; width: 72px; padding: 0; border: 0; background: transparent;
+    color: var(--muted); opacity: .5; font-size: 1rem; line-height: 1; border-radius: 6px; }
+  .ins button:hover, .ins button:focus-visible { opacity: 1; color: var(--accent); }
+  body.is-dragging .ins button { visibility: hidden; }
+
+  .item { display: grid; grid-template-columns: 1fr auto; align-items: center;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 0 0 0 .7rem;
     transition: background-color .4s; }
   .item.flash { background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
-  .item .body { min-width: 0; cursor: pointer; padding: .2rem 0; }
+  .row.dragging { z-index: 3; }
+  .row.dragging .item { box-shadow: 0 6px 20px rgba(0,0,0,.25); transition: none; }
+  .item .body { min-width: 0; cursor: pointer; padding: .45rem 0; display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .4rem;
+    user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
   .item .title { overflow-wrap: anywhere; }
   .item.s-done .title { color: var(--muted); text-decoration: line-through; }
-  .item .meta { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
   .item .note { color: var(--muted); font-size: .8rem; }
   .tagchip { font-size: .75rem; padding: .05rem .5rem; border-radius: 999px;
     background: hsl(var(--h) 60% var(--tag-l-bg)); color: hsl(var(--h) 55% var(--tag-l-fg)); }
-  .moves { display: flex; flex-direction: column; gap: .25rem; }
-  .moves button { min-height: 36px; width: 40px; padding: 0; font-size: .8rem; color: var(--muted); }
-  .moves button:disabled { opacity: .25; cursor: default; }
+  .handle { touch-action: none; cursor: grab; color: var(--muted); align-self: stretch; display: grid; place-items: center;
+    width: 44px; font-size: 1.1rem; letter-spacing: -2px; user-select: none; -webkit-user-select: none; }
+  .row.dragging .handle { cursor: grabbing; color: var(--accent); }
+  body.is-dragging { user-select: none; -webkit-user-select: none; }
+  .item.pressing { background: color-mix(in srgb, var(--text) 6%, var(--card)); }
 
-  .pill { min-height: 36px; min-width: 70px; padding: .2rem .55rem; border-radius: 999px; border: 0;
-    font-size: .8rem; font-weight: 600; display: inline-flex; align-items: center; gap: .35rem; justify-content: center; }
-  .pill::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; border: 2px solid currentColor; }
-  .pill.s-new { background: var(--s-new-bg); color: var(--s-new-fg); }
-  .pill.s-open { background: var(--s-open-bg); color: var(--s-open-fg); }
-  .pill.s-open::before { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
-  .pill.s-done { background: var(--s-done-bg); color: var(--s-done-fg); }
-  .pill.s-done::before { background: currentColor; }
+  /* Inline-redigering */
+  .item.editing { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .edit { display: grid; padding: .2rem 0 .3rem; min-width: 0; }
+  .edit input, .edit textarea { border: 0; background: transparent; padding: .3rem 0; border-radius: 0; outline: none; }
+  .edit .e-title { font-weight: 600; }
+  .edit .e-notes { font-size: .95rem; color: var(--muted); resize: none; min-height: 1.9em; overflow: hidden; border-top: 1px dashed var(--line); }
 
-  .empty { text-align: center; color: var(--muted); padding: 3rem 1rem; }
-  .fab { position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: calc(1rem + env(safe-area-inset-bottom));
-    width: 60px; height: 60px; border-radius: 50%; font-size: 2rem; line-height: 1; padding: 0;
-    box-shadow: 0 4px 14px rgba(0,0,0,.25); z-index: 4; }
+  .empty { text-align: center; color: var(--muted); padding: 1.5rem 1rem 0; font-size: .95rem; }
 
-  /* ---- Ark (bottom sheet) och dialoger ---- */
+  /* ---- Dialoger ---- */
   dialog { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 0; }
   dialog::backdrop { background: rgba(0,0,0,.45); }
-  dialog.sheet { width: 100%; max-width: 640px; margin: auto auto 0; border-radius: 18px 18px 0 0;
-    max-height: 92dvh; border-bottom: 0; }
-  dialog.sheet form { display: grid; gap: .75rem; padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom)); }
-  dialog.small { border-radius: 14px; width: min(92vw, 380px); }
-  dialog.small .card { border: 0; }
-  .sheet-head { display: flex; align-items: center; gap: .5rem; }
-  .sheet-head h2 { margin: 0; font-size: 1.15rem; flex: 1; }
+  dialog.small { border-radius: 14px; width: min(92vw, 400px); }
+  dialog.small .card { border: 0; max-width: none; }
+  #tagBox h1 { font-size: 1.1rem; overflow-wrap: anywhere; }
   .lbl { font-size: .8rem; color: var(--muted); margin-bottom: -.4rem; }
   .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: .35rem; }
-  .seg button { border-radius: 10px; }
   .seg button.on.s-new { background: var(--s-new-bg); color: var(--s-new-fg); border-color: var(--s-new-fg); font-weight: 600; }
   .seg button.on.s-open { background: var(--s-open-bg); color: var(--s-open-fg); border-color: var(--s-open-fg); font-weight: 600; }
   .seg button.on.s-done { background: var(--s-done-bg); color: var(--s-done-fg); border-color: var(--s-done-fg); font-weight: 600; }
-  #fTags { flex-wrap: wrap; padding: 0; }
   .tagadd { display: flex; gap: .4rem; }
   .tagadd button { white-space: nowrap; }
-  .row { display: flex; gap: .5rem; flex-wrap: wrap; }
-  .row > button { flex: 1; }
+  .row-btns { display: flex; gap: .5rem; }
+  .row-btns > button { flex: 1; }
   details summary { cursor: pointer; color: var(--muted); font-size: .9rem; }
   details ul { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .85rem; color: var(--muted); }
   .menu { display: grid; gap: .5rem; padding: 1rem; }
@@ -196,8 +202,8 @@
       <span id="status"></span>
       <button id="menuBtn" class="ghost" aria-label="Meny">⋯</button>
     </div>
-    <div id="filters">
-      <div class="chips" id="statusFilter"></div>
+    <div class="filterrow" id="filters">
+      <select id="statusSelect" aria-label="Visa status"></select>
       <div class="chips" id="tagFilter"></div>
     </div>
   </div></header>
@@ -208,41 +214,30 @@
     </section>
     <section id="statsView" class="stats" hidden></section>
   </main>
-
-  <button class="fab primary" id="addBtn" aria-label="Nytt item">+</button>
 </div>
 
-<!-- Skapa / redigera item -->
-<dialog id="sheet" class="sheet">
-  <form id="itemForm">
-    <div class="sheet-head">
-      <h2 id="sheetTitle">Nytt item</h2>
-      <button type="button" class="ghost" id="sheetClose" aria-label="Stäng">✕</button>
+<!-- Långt tryck: taggar, status, ta bort -->
+<dialog id="tagBox" class="small">
+  <div class="card">
+    <h1 id="tbTitle"></h1>
+    <div class="lbl">Taggar</div>
+    <div class="chips wrapping" id="tbTags"></div>
+    <div class="tagadd">
+      <input id="tbNewTag" placeholder="Ny tagg" maxlength="30" autocomplete="off" enterkeyhint="done">
+      <button type="button" id="tbAdd">Lägg till</button>
     </div>
-    <input id="fTitle" placeholder="Vad behöver göras?" maxlength="300" autocomplete="off" required>
-    <textarea id="fNotes" rows="3" placeholder="Anteckningar (valfritt)"></textarea>
     <div class="lbl">Status</div>
-    <div class="seg" id="fStatus">
+    <div class="seg" id="tbStatus">
       <button type="button" data-s="new" class="s-new">New</button>
       <button type="button" data-s="open" class="s-open">Open</button>
       <button type="button" data-s="done" class="s-done">Done</button>
     </div>
-    <div class="lbl">Taggar</div>
-    <div class="chips" id="fTags"></div>
-    <div class="tagadd">
-      <input id="fNewTag" placeholder="Ny tagg" maxlength="30" autocomplete="off" enterkeyhint="done">
-      <button type="button" id="fAddTag">Lägg till</button>
+    <details id="tbHistory"><summary>Historik</summary><ul></ul></details>
+    <div class="row-btns">
+      <button type="button" class="danger" id="tbDelete">Ta bort</button>
+      <button type="button" class="primary" id="tbClose">Klar</button>
     </div>
-    <div class="row" id="fMoves">
-      <button type="button" data-move="top">⤒ Flytta överst</button>
-      <button type="button" data-move="bottom">⤓ Flytta nederst</button>
-    </div>
-    <details id="fHistory"><summary>Historik</summary><ul></ul></details>
-    <div class="row">
-      <button type="button" class="danger" id="fDelete">Ta bort</button>
-      <button type="submit" class="primary">Spara</button>
-    </div>
-  </form>
+  </div>
 </dialog>
 
 <!-- Meny -->
@@ -261,7 +256,7 @@
     <input type="password" id="newPw" placeholder="Nytt lösenord" autocomplete="new-password" required>
     <input type="password" id="newPw2" placeholder="Upprepa nytt lösenord" autocomplete="new-password" required>
     <p class="err" id="pwErr"></p>
-    <div class="row">
+    <div class="row-btns">
       <button type="button" id="pwCancel">Avbryt</button>
       <button type="submit" class="primary" id="pwSubmit">Byt</button>
     </div>
@@ -274,6 +269,7 @@
   const ITERATIONS = 600000;
   const STORE = 'backlogen-auth';
   const AUTOSAVE_MS = 1000;
+  const LONG_PRESS_MS = 500;
   const $ = id => document.getElementById(id);
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -463,7 +459,11 @@
 
   window.addEventListener('beforeunload', e => { if (state.dirty || state.saving) { e.preventDefault(); e.returnValue = ''; } });
   // Spara direkt när appen läggs i bakgrunden på mobilen.
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && state.dirty) save(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'hidden') return;
+    if (ui.editingId) finishEdit(true);
+    if (state.dirty) save();
+  });
 
   // =====================================================================
   //  Datamodell
@@ -471,9 +471,7 @@
   // data = { v: 2, items: [{ id, title, notes, tags[], status, created, updated }], log: [{ t, id, from, to }] }
   // Listans ordning = prioritet. Loggen får en rad när ett item skapas (from: null),
   // vid varje statusbyte och när ett item tas bort (to: 'deleted').
-  const STATUSES = ['new', 'open', 'done'];
   const LABEL = { new: 'New', open: 'Open', done: 'Done', deleted: 'Borttagen' };
-  const NEXT = { new: 'open', open: 'done', done: 'open' };
   const now = () => new Date().toISOString();
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
 
@@ -494,10 +492,10 @@
     return d;
   }
 
-  function addItem(title, notes, tags, status) {
+  function addItemAt(index, title, notes, tags, status) {
     const t = now();
     const it = { id: uid(), title, notes, tags, status: 'new', created: t, updated: t };
-    data.items.unshift(it);
+    data.items.splice(index, 0, it);
     data.log.push({ t, id: it.id, from: null, to: 'new' });
     if (status !== 'new') setItemStatus(it, status);
     return it;
@@ -526,175 +524,338 @@
   // =====================================================================
   //  Lista
   // =====================================================================
-  const ui = { view: 'list', status: 'active', tags: new Set(), editing: null, sheetTags: new Set(), sheetStatus: 'new', period: 'week' };
-  const STATUS_FILTERS = [['active', 'Aktiva'], ['new', 'New'], ['open', 'Open'], ['done', 'Done'], ['all', 'Alla']];
+  const DRAFT = '__draft';
+  // editingId: id för raden som redigeras inline (eller DRAFT för ett nytt item).
+  // draftBefore: id för item:et som det nya ska hamna före (null = sist).
+  const ui = { view: 'list', status: 'active', tags: new Set(), editingId: null, draftBefore: null, period: 'week', boxId: null };
+  const STATUS_FILTERS = [['active', 'Aktiva (New + Open)'], ['new', 'New'], ['open', 'Open'], ['done', 'Done'], ['all', 'Alla']];
+  const list = $('list');
 
   function matchesStatus(it, f) { return f === 'all' || (f === 'active' ? it.status !== 'done' : it.status === f); }
   function matchesTags(it) { for (const t of ui.tags) if (!it.tags.includes(t)) return false; return true; }
   function visibleItems() { return data.items.filter(it => matchesStatus(it, ui.status) && matchesTags(it)); }
+
+  const insBtn = before => `<div class="ins"><button data-ins="${before || ''}" aria-label="Lägg till item här">+</button></div>`;
+
+  function itemHtml(it) {
+    if (ui.editingId === it.id) return editHtml(it.id, it.title, it.notes || '', it.status);
+    return `<div class="item s-${it.status}">
+        <div class="body" data-act="edit">
+          <span class="title">${esc(it.title)}</span>
+          ${it.tags.map(t => `<span class="tagchip" style="--h:${tagHue(t)}">#${esc(t)}</span>`).join('')}
+          ${it.notes ? '<span class="note" title="Har beskrivning">📝</span>' : ''}
+        </div>
+        <div class="handle" aria-label="Dra för att flytta">⋮⋮</div>
+      </div>`;
+  }
+  function editHtml(id, title, notes, status) {
+    return `<div class="item editing s-${status}">
+        <div class="edit">
+          <input class="e-title" value="${esc(title)}" placeholder="Rubrik" maxlength="300" autocomplete="off" enterkeyhint="done">
+          <textarea class="e-notes" rows="1" placeholder="Beskrivning">${esc(notes)}</textarea>
+        </div>
+        ${id === DRAFT ? '<div></div>' : '<div class="handle" aria-label="Dra för att flytta">⋮⋮</div>'}
+      </div>`;
+  }
 
   function render() {
     if (!data) return;
     $('filters').hidden = ui.view !== 'list';
     $('listView').hidden = ui.view !== 'list';
     $('statsView').hidden = ui.view !== 'stats';
-    $('addBtn').hidden = ui.view !== 'list';
     document.querySelectorAll('#viewTabs button').forEach(b => b.classList.toggle('on', b.dataset.view === ui.view));
     if (ui.view === 'stats') { renderStats(); return; }
 
     // Statusfilter (antal räknas inom valda taggar)
     const tagged = data.items.filter(matchesTags);
-    $('statusFilter').innerHTML = STATUS_FILTERS.map(([k, l]) =>
-      `<button class="chip${ui.status === k ? ' on' : ''}" data-status="${k}">${l}<span class="n">${tagged.filter(it => matchesStatus(it, k)).length}</span></button>`
-    ).join('');
+    $('statusSelect').innerHTML = STATUS_FILTERS.map(([k, l]) =>
+      `<option value="${k}"${ui.status === k ? ' selected' : ''}>${l} (${tagged.filter(it => matchesStatus(it, k)).length})</option>`).join('');
 
     // Taggfilter
     const tags = allTags();
     for (const t of [...ui.tags]) if (!tags.some(([n]) => n === t)) ui.tags.delete(t);
-    $('tagFilter').hidden = tags.length === 0;
     $('tagFilter').innerHTML = (ui.tags.size ? '<button class="chip" data-cleartags>✕ Rensa</button>' : '') +
       tags.map(([t, n]) => `<button class="chip tag${ui.tags.has(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}<span class="n">${n}</span></button>`).join('');
 
-    // Items
+    // Items, med ett "+" ovanför varje rad och ett efter sista raden.
     const vis = visibleItems();
-    if (!vis.length) {
-      $('list').innerHTML = `<li class="empty">${data.items.length ? 'Inga items matchar filtret.' : 'Backloggen är tom.<br>Tryck på + för att lägga till ett item.'}</li>`;
-      return;
+    const draftRow = ui.editingId === DRAFT ? `<li class="row" data-id="${DRAFT}">${insBtn(null)}${editHtml(DRAFT, '', '', 'new')}</li>` : '';
+    let html = '';
+    for (const it of vis) {
+      if (draftRow && ui.draftBefore === it.id) html += draftRow;
+      html += `<li class="row" data-id="${it.id}">${insBtn(it.id)}${itemHtml(it)}</li>`;
     }
-    $('list').innerHTML = vis.map((it, i) => `
-      <li class="item s-${it.status}" data-id="${it.id}">
-        <button class="pill s-${it.status}" data-act="cycle" aria-label="Status ${LABEL[it.status]}, tryck för att ändra">${LABEL[it.status]}</button>
-        <div class="body" data-act="edit">
-          <div class="title">${esc(it.title)}</div>
-          ${it.tags.length || it.notes ? `<div class="meta">${it.tags.map(t => `<span class="tagchip" style="--h:${tagHue(t)}">#${esc(t)}</span>`).join('')}${it.notes ? '<span class="note">📝</span>' : ''}</div>` : ''}
-        </div>
-        <div class="moves">
-          <button data-act="up" aria-label="Flytta upp"${i === 0 ? ' disabled' : ''}>▲</button>
-          <button data-act="down" aria-label="Flytta ner"${i === vis.length - 1 ? ' disabled' : ''}>▼</button>
-        </div>
-      </li>`).join('');
-  }
+    if (draftRow && (!ui.draftBefore || !vis.some(it => it.id === ui.draftBefore))) html += draftRow;
+    html += `<li class="ins-end">${insBtn(null)}${!vis.length && !draftRow ? `<div class="empty">${data.items.length ? 'Inga items matchar filtret.' : 'Backloggen är tom.'} Tryck på + för att lägga till.</div>` : ''}</li>`;
+    list.innerHTML = html;
 
-  // Flytta ett steg upp/ner bland de synliga items (hoppar över dolda items i den filtrerade vyn).
-  function move(id, dir) {
-    const vis = visibleItems();
-    const i = vis.findIndex(x => x.id === id), j = i + dir;
-    if (i < 0 || j < 0 || j >= vis.length) return;
-    const it = vis[i], neighbor = vis[j];
-    data.items.splice(data.items.indexOf(it), 1);
-    const n = data.items.indexOf(neighbor);
-    data.items.splice(dir < 0 ? n : n + 1, 0, it);
-    commit();
-    flash(id);
+    // Fokus i raden som redigeras.
+    const editing = list.querySelector('.item.editing');
+    if (editing) {
+      const ta = editing.querySelector('.e-notes'); autoGrow(ta);
+      const inp = editing.querySelector('.e-title');
+      inp.focus({ preventScroll: true });
+      inp.setSelectionRange(inp.value.length, inp.value.length);
+      const r = editing.getBoundingClientRect();
+      if (r.bottom > innerHeight - 20 || r.top < 100) editing.scrollIntoView({ block: 'center' });
+    }
   }
+  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+
   function flash(id) {
-    const el = document.querySelector(`.item[data-id="${id}"]`);
+    const el = list.querySelector(`.row[data-id="${id}"] .item`);
     if (!el) return;
     el.classList.add('flash');
-    const r = el.getBoundingClientRect(), top = $('app').querySelector('header').getBoundingClientRect().bottom;
+    const r = el.getBoundingClientRect(), top = document.querySelector('header.top').getBoundingClientRect().bottom;
     if (r.top < top || r.bottom > innerHeight) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     setTimeout(() => el.classList.remove('flash'), 500);
   }
 
-  $('list').addEventListener('click', e => {
-    const actEl = e.target.closest('[data-act]'); if (!actEl) return;
-    const id = actEl.closest('.item').dataset.id, it = byId(id);
-    const act = actEl.dataset.act;
-    if (act === 'up') move(id, -1);
-    else if (act === 'down') move(id, 1);
-    else if (act === 'cycle') { setItemStatus(it, NEXT[it.status]); commit(); flash(id); }
-    else if (act === 'edit') openSheet(it);
+  // ---- Inline-redigering ----
+  function startEdit(id) {
+    if (ui.editingId) finishEdit(true);
+    ui.editingId = id;
+    render();
+  }
+  function startDraft(before) {
+    if (ui.editingId) finishEdit(true);
+    ui.editingId = DRAFT;
+    ui.draftBefore = before || null;
+    render();
+  }
+  function draftIndex() {
+    if (ui.draftBefore) { const i = data.items.indexOf(byId(ui.draftBefore)); if (i >= 0) return i; }
+    const vis = visibleItems();
+    return vis.length ? data.items.indexOf(vis[vis.length - 1]) + 1 : data.items.length;
+  }
+  // Avslutar redigeringen. Tom rubrik på ett nytt item = inget skapas. Tom rubrik på befintligt = ändringen ignoreras.
+  function finishEdit(keep) {
+    pendingFinish = false;
+    const id = ui.editingId; if (!id) return;
+    const row = list.querySelector('.item.editing');
+    const title = row ? row.querySelector('.e-title').value.trim() : '';
+    const notes = row ? row.querySelector('.e-notes').value.trim() : '';
+    let changed = false, flashId = null;
+    if (keep && row && title) {
+      if (id === DRAFT) {
+        const status = ['new', 'open', 'done'].includes(ui.status) ? ui.status : 'new';
+        flashId = addItemAt(draftIndex(), title, notes, [...ui.tags], status).id;
+        changed = true;
+      } else {
+        const it = byId(id);
+        if (it && (it.title !== title || (it.notes || '') !== notes)) {
+          it.title = title; it.notes = notes; it.updated = now(); changed = true;
+        }
+      }
+    }
+    ui.editingId = null; ui.draftBefore = null;
+    if (document.activeElement && list.contains(document.activeElement)) document.activeElement.blur();
+    changed ? commit() : render();
+    if (flashId) flash(flashId);
+  }
+
+  // Ett tryck utanför raden som redigeras avslutar redigeringen. Det görs först när trycket
+  // är klart, så att samma tryck kan öppna en annan rad eller ett "+".
+  let pointerIsDown = false, pendingFinish = false;
+  document.addEventListener('pointerdown', e => {
+    pointerIsDown = true;
+    const editing = list.querySelector('.item.editing');
+    if (editing && !editing.contains(e.target) && !e.target.closest('dialog')) pendingFinish = true;
+  }, true);
+  const pointerRelease = () => { pointerIsDown = false; if (pendingFinish) setTimeout(() => { if (pendingFinish) finishEdit(true); }, 0); };
+  document.addEventListener('pointerup', pointerRelease, true);
+  document.addEventListener('pointercancel', pointerRelease, true);
+  // Tangentbord / fokus som lämnar raden (t.ex. Tab eller "Klar" på mobilens tangentbord).
+  list.addEventListener('focusout', () => {
+    setTimeout(() => {
+      const editing = list.querySelector('.item.editing');
+      if (!ui.editingId || !editing || editing.contains(document.activeElement)) return;
+      if (pointerIsDown) pendingFinish = true; else finishEdit(true);
+    }, 0);
   });
-  $('statusFilter').addEventListener('click', e => {
-    const b = e.target.closest('[data-status]'); if (!b) return;
-    ui.status = b.dataset.status; render();
+  list.addEventListener('keydown', e => {
+    if (!e.target.closest('.item.editing')) return;
+    if (e.key === 'Escape') { e.preventDefault(); finishEdit(false); }
+    else if (e.key === 'Enter' && e.target.classList.contains('e-title')) { e.preventDefault(); finishEdit(true); }
   });
+  list.addEventListener('input', e => { if (e.target.classList.contains('e-notes')) autoGrow(e.target); });
+
+  list.addEventListener('click', e => {
+    if (drag || Date.now() - suppressClickUntil < 0) return;
+    const ins = e.target.closest('[data-ins]');
+    if (ins) { const before = ins.dataset.ins; pendingFinish = false; startDraft(before); return; }
+    const body = e.target.closest('[data-act="edit"]');
+    if (body) { const id = body.closest('.row').dataset.id; pendingFinish = false; startEdit(id); }
+  });
+
+  // ---- Långt tryck: öppnar rutan för taggar ----
+  let press = null, suppressClickUntil = 0;
+  list.addEventListener('contextmenu', e => { if (e.target.closest('.body')) e.preventDefault(); });
+  list.addEventListener('pointerdown', e => {
+    if (e.target.closest('.handle')) return startDrag(e);
+    const body = e.target.closest('.body'); if (!body) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const item = body.closest('.item'), id = body.closest('.row').dataset.id;
+    item.classList.add('pressing');
+    press = { x: e.clientX, y: e.clientY, item, fired: false,
+      t: setTimeout(() => {
+        press.fired = true; item.classList.remove('pressing');
+        if (navigator.vibrate) navigator.vibrate(15);
+        if (pendingFinish) finishEdit(true);
+        openTagBox(id);
+      }, LONG_PRESS_MS) };
+  });
+  function cancelPress() { if (!press) return; clearTimeout(press.t); press.item.classList.remove('pressing'); press = null; }
+  list.addEventListener('pointermove', e => {
+    if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) cancelPress();
+    if (drag) { drag.y = e.clientY; positionDrag(); }
+  });
+  list.addEventListener('pointerup', e => {
+    if (press && press.fired) suppressClickUntil = Date.now() + 400;
+    cancelPress();
+    endDrag();
+  });
+  list.addEventListener('pointercancel', () => { cancelPress(); endDrag(); });
+
+  // ---- Drag and drop (pekare: fungerar med finger och mus) ----
+  // Raderna flyttas i DOM:en medan man drar. När man släpper skrivs den nya ordningen
+  // tillbaka till de platser i den fullständiga listan som de synliga items hade,
+  // så dolda (filtrerade) items ligger kvar där de var.
+  let drag = null;
+  function startDrag(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    if (ui.editingId) { pendingFinish = false; finishEdit(true); }
+    const handle = list.querySelector(`.row[data-id="${e.target.closest('.row').dataset.id}"] .handle`);
+    if (!handle) return;
+    const el = handle.closest('.row');
+    try { handle.setPointerCapture(e.pointerId); } catch {}
+    drag = { el, grab: e.clientY - el.getBoundingClientRect().top, y: e.clientY, before: rowIds().join() };
+    el.classList.add('dragging');
+    document.body.classList.add('is-dragging');
+    if (navigator.vibrate) navigator.vibrate(10);
+    drag.raf = requestAnimationFrame(dragLoop);
+  }
+  const rowIds = () => [...list.querySelectorAll(':scope > .row')].map(x => x.dataset.id);
+  const isRow = el => el && el.classList.contains('row');
+
+  function dragLoop() {
+    if (!drag) return;
+    // Autoscroll nära kanterna.
+    const topEdge = document.querySelector('header.top').getBoundingClientRect().bottom;
+    if (drag.y < topEdge + 50) scrollBy(0, -Math.ceil((topEdge + 50 - drag.y) / 6));
+    else if (drag.y > innerHeight - 70) scrollBy(0, Math.ceil((drag.y - innerHeight + 70) / 6));
+    positionDrag();
+    drag.raf = requestAnimationFrame(dragLoop);
+  }
+  function positionDrag() {
+    // Mät i listans layoutkoordinater (offsetTop påverkas inte av pågående animationer).
+    const el = drag.el, top = drag.y - drag.grab - list.getBoundingClientRect().top;
+    for (let guard = 0; guard < 200; guard++) {
+      const prev = el.previousElementSibling, next = el.nextElementSibling;
+      if (isRow(prev) && top < prev.offsetTop + prev.offsetHeight / 2) { animateSwap(prev, () => list.insertBefore(el, prev)); continue; }
+      if (isRow(next) && top + el.offsetHeight > next.offsetTop + next.offsetHeight / 2) { animateSwap(next, () => list.insertBefore(el, next.nextElementSibling)); continue; }
+      break;
+    }
+    el.style.transform = `translateY(${top - el.offsetTop}px)`;
+  }
+  // Liten glidanimation för raden som byter plats med den man drar (FLIP).
+  function animateSwap(other, doMove) {
+    const before = other.offsetTop;
+    doMove();
+    const delta = before - other.offsetTop;
+    other.style.transition = 'none';
+    other.style.transform = `translateY(${delta}px)`;
+    requestAnimationFrame(() => { other.style.transition = 'transform .15s'; other.style.transform = ''; });
+  }
+  function endDrag() {
+    if (!drag) return;
+    cancelAnimationFrame(drag.raf);
+    positionDrag();
+    const { el } = drag;
+    el.classList.remove('dragging'); el.style.transform = '';
+    document.body.classList.remove('is-dragging');
+    const ids = rowIds();
+    const changed = ids.join() !== drag.before;
+    drag = null; suppressClickUntil = Date.now() + 60;
+    if (!changed) return;
+    const vis = ids.map(byId);
+    const slots = vis.map(it => data.items.indexOf(it)).sort((a, b) => a - b);
+    slots.forEach((slot, k) => { data.items[slot] = vis[k]; });
+    commit();
+    flash(el.dataset.id);
+  }
+
+  // ---- Filter och flikar ----
+  $('statusSelect').addEventListener('change', e => { ui.status = e.target.value; ui.editingId = null; render(); });
   $('tagFilter').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.hasAttribute('data-cleartags')) ui.tags.clear();
     else { const t = b.dataset.tag; ui.tags.has(t) ? ui.tags.delete(t) : ui.tags.add(t); }
-    render();
+    if (ui.editingId) finishEdit(true); else render();
   });
   $('viewTabs').addEventListener('click', e => {
     const b = e.target.closest('[data-view]'); if (!b) return;
+    if (ui.editingId) finishEdit(true);
     ui.view = b.dataset.view; render(); scrollTo(0, 0);
   });
 
   // =====================================================================
-  //  Skapa / redigera
+  //  Ruta för taggar / status (långt tryck)
   // =====================================================================
-  const sheet = $('sheet');
-  function openSheet(it) {
-    ui.editing = it || null;
-    $('sheetTitle').textContent = it ? 'Redigera' : 'Nytt item';
-    $('fTitle').value = it ? it.title : '';
-    $('fNotes').value = it ? it.notes || '' : '';
-    $('fNewTag').value = '';
-    ui.sheetStatus = it ? it.status : (['new', 'open', 'done'].includes(ui.status) ? ui.status : 'new');
-    ui.sheetTags = new Set(it ? it.tags : ui.tags);
-    $('fMoves').hidden = $('fDelete').hidden = $('fHistory').hidden = !it;
-    if (it) {
-      const fmt = t => new Date(t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
-      $('fHistory').querySelector('ul').innerHTML = data.log.filter(l => l.id === it.id).reverse()
-        .map(l => `<li>${fmt(l.t)}: ${l.from ? `${LABEL[l.from]} → ${LABEL[l.to]}` : 'Skapad'}</li>`).join('');
-      $('fHistory').open = false;
-    }
-    renderSheet();
-    sheet.showModal();
-    if (!it) $('fTitle').focus();
+  const box = $('tagBox');
+  function openTagBox(id) {
+    const it = byId(id); if (!it) return;
+    ui.boxId = id;
+    $('tbTitle').textContent = it.title;
+    $('tbNewTag').value = '';
+    const fmt = t => new Date(t).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' });
+    $('tbHistory').querySelector('ul').innerHTML = data.log.filter(l => l.id === id).reverse()
+      .map(l => `<li>${fmt(l.t)}: ${l.from ? `${LABEL[l.from]} → ${LABEL[l.to]}` : 'Skapad'}</li>`).join('');
+    $('tbHistory').open = false;
+    renderTagBox();
+    box.showModal();
   }
-  function renderSheet() {
-    document.querySelectorAll('#fStatus button').forEach(b => b.classList.toggle('on', b.dataset.s === ui.sheetStatus));
-    const tags = new Set([...allTags().map(([t]) => t), ...ui.sheetTags]);
-    $('fTags').innerHTML = [...tags].sort((a, b) => a.localeCompare(b, 'sv')).map(t =>
-      `<button type="button" class="chip tag${ui.sheetTags.has(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')
-      || '<span class="note" style="color:var(--muted);font-size:.85rem">Inga taggar än – skriv en nedan.</span>';
+  function renderTagBox() {
+    const it = byId(ui.boxId); if (!it) return;
+    document.querySelectorAll('#tbStatus button').forEach(b => b.classList.toggle('on', b.dataset.s === it.status));
+    const tags = new Set([...allTags().map(([t]) => t), ...it.tags]);
+    $('tbTags').innerHTML = [...tags].sort((a, b) => a.localeCompare(b, 'sv')).map(t =>
+      `<button type="button" class="chip tag${it.tags.includes(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')
+      || '<span style="color:var(--muted);font-size:.85rem">Inga taggar än – skriv en nedan.</span>';
   }
-  function addSheetTag() {
-    const raw = $('fNewTag').value;
-    raw.split(',').map(normTag).filter(Boolean).forEach(t => ui.sheetTags.add(t));
-    $('fNewTag').value = '';
-    renderSheet();
+  function addBoxTags() {
+    const it = byId(ui.boxId); if (!it) return;
+    const add = $('tbNewTag').value.split(',').map(normTag).filter(t => t && !it.tags.includes(t));
+    $('tbNewTag').value = '';
+    if (!add.length) return;
+    it.tags.push(...add); it.updated = now();
+    commit(); renderTagBox();
   }
-  $('fStatus').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { ui.sheetStatus = b.dataset.s; renderSheet(); } });
-  $('fTags').addEventListener('click', e => {
-    const b = e.target.closest('[data-tag]'); if (!b) return;
-    const t = b.dataset.tag; ui.sheetTags.has(t) ? ui.sheetTags.delete(t) : ui.sheetTags.add(t); renderSheet();
+  $('tbTags').addEventListener('click', e => {
+    const b = e.target.closest('[data-tag]'); const it = byId(ui.boxId); if (!b || !it) return;
+    const t = b.dataset.tag;
+    it.tags = it.tags.includes(t) ? it.tags.filter(x => x !== t) : [...it.tags, t];
+    it.updated = now();
+    commit(); renderTagBox();
   });
-  $('fAddTag').addEventListener('click', addSheetTag);
-  $('fNewTag').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addSheetTag(); } });
-  $('sheetClose').addEventListener('click', () => sheet.close());
-  sheet.addEventListener('click', e => { if (e.target === sheet) sheet.close(); }); // tryck utanför arket
-
-  $('itemForm').addEventListener('submit', e => {
-    e.preventDefault();
-    if ($('fNewTag').value.trim()) addSheetTag();
-    const title = $('fTitle').value.trim();
-    if (!title) { $('fTitle').focus(); return; }
-    const notes = $('fNotes').value.trim(), tags = [...ui.sheetTags];
-    let it = ui.editing;
-    if (it) {
-      it.title = title; it.notes = notes; it.tags = tags; it.updated = now();
-      setItemStatus(it, ui.sheetStatus);
-    } else {
-      it = addItem(title, notes, tags, ui.sheetStatus);
-    }
-    sheet.close();
-    commit();
-    flash(it.id);
+  $('tbAdd').addEventListener('click', addBoxTags);
+  $('tbNewTag').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addBoxTags(); } });
+  $('tbStatus').addEventListener('click', e => {
+    const b = e.target.closest('[data-s]'); const it = byId(ui.boxId); if (!b || !it) return;
+    setItemStatus(it, b.dataset.s); commit(); renderTagBox();
   });
-  $('fDelete').addEventListener('click', () => {
-    if (!ui.editing || !confirm('Ta bort "' + ui.editing.title + '"?')) return;
-    deleteItem(ui.editing); sheet.close(); commit();
+  $('tbDelete').addEventListener('click', () => {
+    const it = byId(ui.boxId);
+    if (!it || !confirm('Ta bort "' + it.title + '"?')) return;
+    deleteItem(it); box.close(); commit();
   });
-  $('fMoves').addEventListener('click', e => {
-    const b = e.target.closest('[data-move]'); if (!b || !ui.editing) return;
-    const it = ui.editing;
-    data.items.splice(data.items.indexOf(it), 1);
-    b.dataset.move === 'top' ? data.items.unshift(it) : data.items.push(it);
-    sheet.close(); commit(); flash(it.id);
+  $('tbClose').addEventListener('click', () => box.close());
+  box.addEventListener('close', () => {
+    if ($('tbNewTag').value.trim()) addBoxTags();
+    const id = ui.boxId; ui.boxId = null;
+    if (id) flash(id);
   });
-  $('addBtn').addEventListener('click', () => openSheet(null));
 
   // =====================================================================
   //  Statistik
@@ -838,7 +999,13 @@
   const menu = $('menu'), dlg = $('pwDialog');
   $('menuBtn').addEventListener('click', () => menu.showModal());
   $('menuClose').addEventListener('click', () => menu.close());
-  menu.addEventListener('click', e => { if (e.target === menu) menu.close(); });
+  // Tryck utanför en ruta stänger den – men bara om trycket både började och slutade utanför
+  // (annars stängs taggrutan direkt av samma långa tryck som öppnade den).
+  for (const d of [box, menu]) {
+    let downOutside = false;
+    d.addEventListener('pointerdown', e => { downOutside = e.target === d; });
+    d.addEventListener('click', e => { if (e.target === d && downOutside) d.close(); downOutside = false; });
+  }
   $('pwBtn').addEventListener('click', () => { menu.close(); $('pwErr').textContent = ''; dlg.showModal(); $('newPw').focus(); });
   $('pwCancel').addEventListener('click', () => dlg.close());
   $('pwForm').addEventListener('submit', async e => {
@@ -864,6 +1031,7 @@
   });
   $('logoutBtn').addEventListener('click', async () => {
     menu.close();
+    if (ui.editingId) finishEdit(true);
     if (state.dirty) await save();
     forget();
     location.reload();
