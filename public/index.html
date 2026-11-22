@@ -74,7 +74,7 @@
   #menuBtn { font-size: 1.3rem; line-height: 1; padding: 0 .7rem; }
 
   .filterrow { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; }
-  #statusSelect { width: auto; flex: none; padding: .4rem 2rem .4rem .7rem; min-height: 36px; background-color: var(--card);
+  .filterrow select { flex: 1 1 0; min-width: 0; width: auto; text-overflow: ellipsis; padding: .4rem 2rem .4rem .7rem; min-height: 36px; background-color: var(--card);
     appearance: none; -webkit-appearance: none;
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
     background-position: right .95rem center, right .65rem center; background-size: 5px 5px; background-repeat: no-repeat; }
@@ -204,7 +204,7 @@
     </div>
     <div class="filterrow" id="filters">
       <select id="statusSelect" aria-label="Visa status"></select>
-      <div class="chips" id="tagFilter"></div>
+      <select id="tagSelect" aria-label="Visa tagg"></select>
     </div>
   </div></header>
 
@@ -496,6 +496,7 @@
     const t = now();
     const it = { id: uid(), title, notes, tags, status: 'new', created: t, updated: t };
     data.items.splice(index, 0, it);
+    markTagsUsed(tags);
     data.log.push({ t, id: it.id, from: null, to: 'new' });
     if (status !== 'new') setItemStatus(it, status);
     return it;
@@ -518,7 +519,20 @@
   function allTags() {
     const m = new Map();
     data.items.forEach(it => it.tags.forEach(t => m.set(t, (m.get(t) || 0) + 1)));
-    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], 'sv'));
+    // Senast använda först. "Använd" = taggen lades på ett item (sparas i data.tagUsed).
+    // Taggar utan sådan tidpunkt (äldre data) får senaste ändringstiden bland sina items.
+    const used = new Map();
+    data.items.forEach(it => it.tags.forEach(t => {
+      const u = (data.tagUsed && data.tagUsed[t]) || it.updated || it.created;
+      if (!used.has(t) || u > used.get(t)) used.set(t, u);
+    }));
+    return [...m.entries()].sort((a, b) => (used.get(b[0]) || '').localeCompare(used.get(a[0]) || '') || a[0].localeCompare(b[0], 'sv'));
+  }
+  function markTagsUsed(tags) {
+    if (!tags.length) return;
+    data.tagUsed = data.tagUsed || {};
+    const t = now();
+    tags.forEach(x => { data.tagUsed[x] = t; });
   }
 
   // =====================================================================
@@ -527,12 +541,12 @@
   const DRAFT = '__draft';
   // editingId: id för raden som redigeras inline (eller DRAFT för ett nytt item).
   // draftBefore: id för item:et som det nya ska hamna före (null = sist).
-  const ui = { view: 'list', status: 'active', tags: new Set(), editingId: null, draftBefore: null, period: 'week', boxId: null };
-  const STATUS_FILTERS = [['active', 'Aktiva (New + Open)'], ['new', 'New'], ['open', 'Open'], ['done', 'Done'], ['all', 'Alla']];
+  const ui = { view: 'list', status: 'active', tag: '', editingId: null, draftBefore: null, period: 'week', boxId: null };
+  const STATUS_FILTERS = [['active', 'Aktiva'], ['new', 'New'], ['open', 'Open'], ['done', 'Done'], ['all', 'Alla']];
   const list = $('list');
 
   function matchesStatus(it, f) { return f === 'all' || (f === 'active' ? it.status !== 'done' : it.status === f); }
-  function matchesTags(it) { for (const t of ui.tags) if (!it.tags.includes(t)) return false; return true; }
+  function matchesTags(it) { return !ui.tag || it.tags.includes(ui.tag); }
   function visibleItems() { return data.items.filter(it => matchesStatus(it, ui.status) && matchesTags(it)); }
 
   const insBtn = before => `<div class="ins"><button data-ins="${before || ''}" aria-label="Lägg till item här">+</button></div>`;
@@ -573,9 +587,10 @@
 
     // Taggfilter
     const tags = allTags();
-    for (const t of [...ui.tags]) if (!tags.some(([n]) => n === t)) ui.tags.delete(t);
-    $('tagFilter').innerHTML = (ui.tags.size ? '<button class="chip" data-cleartags>✕ Rensa</button>' : '') +
-      tags.map(([t, n]) => `<button class="chip tag${ui.tags.has(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}<span class="n">${n}</span></button>`).join('');
+    if (ui.tag && !tags.some(([n]) => n === ui.tag)) ui.tag = '';
+    $('tagSelect').hidden = tags.length === 0;
+    $('tagSelect').innerHTML = '<option value="">Alla taggar</option>' +
+      tags.map(([t, n]) => `<option value="${esc(t)}"${ui.tag === t ? ' selected' : ''}>#${esc(t)} (${n})</option>`).join('');
 
     // Items, med ett "+" ovanför varje rad och ett efter sista raden.
     const vis = visibleItems();
@@ -639,7 +654,7 @@
     if (keep && row && title) {
       if (id === DRAFT) {
         const status = ['new', 'open', 'done'].includes(ui.status) ? ui.status : 'new';
-        flashId = addItemAt(draftIndex(), title, notes, [...ui.tags], status).id;
+        flashId = addItemAt(draftIndex(), title, notes, ui.tag ? [ui.tag] : [], status).id;
         changed = true;
       } else {
         const it = byId(id);
@@ -788,12 +803,7 @@
 
   // ---- Filter och flikar ----
   $('statusSelect').addEventListener('change', e => { ui.status = e.target.value; ui.editingId = null; render(); });
-  $('tagFilter').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if (b.hasAttribute('data-cleartags')) ui.tags.clear();
-    else { const t = b.dataset.tag; ui.tags.has(t) ? ui.tags.delete(t) : ui.tags.add(t); }
-    if (ui.editingId) finishEdit(true); else render();
-  });
+  $('tagSelect').addEventListener('change', e => { ui.tag = e.target.value; ui.editingId = null; render(); });
   $('viewTabs').addEventListener('click', e => {
     const b = e.target.closest('[data-view]'); if (!b) return;
     if (ui.editingId) finishEdit(true);
@@ -813,14 +823,15 @@
     $('tbHistory').querySelector('ul').innerHTML = data.log.filter(l => l.id === id).reverse()
       .map(l => `<li>${fmt(l.t)}: ${l.from ? `${LABEL[l.from]} → ${LABEL[l.to]}` : 'Skapad'}</li>`).join('');
     $('tbHistory').open = false;
+    ui.boxOrder = allTags().map(([t]) => t);
     renderTagBox();
     box.showModal();
   }
   function renderTagBox() {
     const it = byId(ui.boxId); if (!it) return;
     document.querySelectorAll('#tbStatus button').forEach(b => b.classList.toggle('on', b.dataset.s === it.status));
-    const tags = new Set([...allTags().map(([t]) => t), ...it.tags]);
-    $('tbTags').innerHTML = [...tags].sort((a, b) => a.localeCompare(b, 'sv')).map(t =>
+    const tags = new Set([...it.tags.filter(t => !ui.boxOrder.includes(t)), ...ui.boxOrder]);
+    $('tbTags').innerHTML = [...tags].map(t =>
       `<button type="button" class="chip tag${it.tags.includes(t) ? ' on' : ''}" style="--h:${tagHue(t)}" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')
       || '<span style="color:var(--muted);font-size:.85rem">Inga taggar än – skriv en nedan.</span>';
   }
@@ -829,13 +840,14 @@
     const add = $('tbNewTag').value.split(',').map(normTag).filter(t => t && !it.tags.includes(t));
     $('tbNewTag').value = '';
     if (!add.length) return;
-    it.tags.push(...add); it.updated = now();
+    it.tags.push(...add); it.updated = now(); markTagsUsed(add);
     commit(); renderTagBox();
   }
   $('tbTags').addEventListener('click', e => {
     const b = e.target.closest('[data-tag]'); const it = byId(ui.boxId); if (!b || !it) return;
     const t = b.dataset.tag;
-    it.tags = it.tags.includes(t) ? it.tags.filter(x => x !== t) : [...it.tags, t];
+    if (it.tags.includes(t)) it.tags = it.tags.filter(x => x !== t);
+    else { it.tags = [...it.tags, t]; markTagsUsed([t]); }
     it.updated = now();
     commit(); renderTagBox();
   });
