@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Backlogen</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --card: #fff; --text: #1f2328; --muted: #6b7280;
+    --line: #e3e1dc; --accent: #2f6feb; --err: #c0392b; --ok: #2e7d32;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181c; --card: #1f2227; --text: #e6e6e6; --muted: #9aa0a6; --line: #33373e; --accent: #6ea0ff; --err: #ff7b6b; --ok: #7ccf82; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  [hidden] { display: none !important; }
+
+  .screen { min-height: 100vh; display: grid; place-items: center; padding: 1rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+          padding: 2rem; width: 100%; max-width: 360px; display: grid; gap: .8rem; }
+  .card h1 { margin: 0; font-size: 1.4rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .9rem; }
+  input[type=password] { font: inherit; padding: .6rem .7rem; border: 1px solid var(--line);
+          border-radius: 8px; background: var(--bg); color: var(--text); width: 100%; }
+  label.check { display: flex; gap: .5rem; align-items: center; font-size: .9rem; color: var(--muted); }
+  button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card);
+           color: var(--text); border-radius: 8px; padding: .35rem .7rem; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; padding: .6rem; }
+  button:disabled { opacity: .6; cursor: wait; }
+  .err { color: var(--err) !important; min-height: 1.2em; }
+
+  .toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: .35rem;
+             align-items: center; padding: .6rem 1rem; background: var(--card);
+             border-bottom: 1px solid var(--line); }
+  .toolbar .sep { width: 1px; height: 1.4rem; background: var(--line); margin: 0 .2rem; }
+  .toolbar .spacer { flex: 1; }
+  #status { font-size: .85rem; color: var(--muted); }
+  #status.dirty { color: var(--err); }
+  #status.saved { color: var(--ok); }
+
+  #editor { max-width: 800px; margin: 2rem auto; padding: 2rem 2.5rem; min-height: 70vh;
+            background: var(--card); border: 1px solid var(--line); border-radius: 12px; outline: none; }
+  #editor:focus { border-color: var(--accent); }
+  #editor a { color: var(--accent); }
+  #editor h1, #editor h2 { line-height: 1.25; }
+  @media (max-width: 600px) { #editor { margin: 0; border-radius: 0; padding: 1.2rem; } }
+
+  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--card); color: var(--text); padding: 0; }
+  dialog::backdrop { background: rgba(0,0,0,.4); }
+  dialog .card { border: 0; }
+  .row { display: flex; gap: .5rem; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<div id="loading" class="screen"><p>Laddar…</p></div>
+
+<div id="lock" class="screen" hidden>
+  <form id="lockForm" class="card">
+    <h1>Backlogen</h1>
+    <p id="lockHint">Ange lösenord för att visa innehållet.</p>
+    <input type="password" id="pw" placeholder="Lösenord" autocomplete="current-password" required>
+    <input type="password" id="pw2" placeholder="Upprepa lösenord" autocomplete="new-password" hidden>
+    <label class="check"><input type="checkbox" id="remember" checked> Håll mig inloggad på den här enheten</label>
+    <button type="submit" class="primary" id="lockBtn">Lås upp</button>
+    <p class="err" id="lockErr"></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <div class="toolbar">
+    <button data-cmd="bold" title="Fet (Ctrl+B)"><b>B</b></button>
+    <button data-cmd="italic" title="Kursiv (Ctrl+I)"><i>I</i></button>
+    <button data-cmd="underline" title="Understruken (Ctrl+U)"><u>U</u></button>
+    <span class="sep"></span>
+    <button data-block="H1" title="Rubrik 1">H1</button>
+    <button data-block="H2" title="Rubrik 2">H2</button>
+    <button data-block="P" title="Brödtext">¶</button>
+    <span class="sep"></span>
+    <button data-cmd="insertUnorderedList" title="Punktlista">• Lista</button>
+    <button data-cmd="insertOrderedList" title="Numrerad lista">1. Lista</button>
+    <button id="linkBtn" title="Länk (Ctrl+klick för att öppna)">Länk</button>
+    <button data-cmd="removeFormat" title="Rensa formatering">⌫ Format</button>
+    <span class="spacer"></span>
+    <span id="status"></span>
+    <button id="pwBtn">Byt lösenord</button>
+    <button id="logoutBtn">Logga ut</button>
+  </div>
+  <main id="editor" contenteditable="true" spellcheck="true"></main>
+</div>
+
+<dialog id="pwDialog">
+  <form method="dialog" class="card" id="pwForm">
+    <h1>Byt lösenord</h1>
+    <input type="password" id="newPw" placeholder="Nytt lösenord" autocomplete="new-password" required>
+    <input type="password" id="newPw2" placeholder="Upprepa nytt lösenord" autocomplete="new-password" required>
+    <p class="err" id="pwErr"></p>
+    <div class="row">
+      <button type="button" id="pwCancel">Avbryt</button>
+      <button type="submit" class="primary" style="padding:.35rem .9rem" id="pwSubmit">Byt</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+  const ITERATIONS = 600000;
+  const STORE = 'backlogen-auth';
+  const AUTOSAVE_MS = 1500;
+  const $ = id => document.getElementById(id);
+  const editor = $('editor');
+
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  const b64 = buf => {
+    const b = new Uint8Array(buf); let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  };
+  const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+
+  // auth = { salt, iter, key (CryptoKey), keyRaw (b64), token (b64) }
+  const state = { auth: null, version: 0, dirty: false, saving: false, timer: null };
+
+  function show(id) { ['loading', 'lock', 'app'].forEach(s => { $(s).hidden = s !== id; }); }
+
+  // ---------- Kryptering ----------
+  // Lösenordet ger 512 bitar: första halvan är krypteringsnyckel, andra halvan åtkomsttoken till servern.
+  async function deriveAuth(pw, salt, iter) {
+    const base = await crypto.subtle.importKey('raw', enc.encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', salt: unb64(salt), iterations: iter, hash: 'SHA-256' }, base, 512));
+    return authFromRaw(salt, iter, b64(bits.slice(0, 32)), b64(bits.slice(32)));
+  }
+  async function authFromRaw(salt, iter, keyRaw, token) {
+    const key = await crypto.subtle.importKey('raw', unb64(keyRaw), { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+    return { salt, iter, key, keyRaw, token };
+  }
+  async function encrypt(auth, text) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, auth.key, enc.encode(text));
+    return { iv: b64(iv), data: b64(ct) };
+  }
+  async function decrypt(auth, p) {
+    return dec.decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(p.iv) }, auth.key, unb64(p.data)));
+  }
+
+  // ---------- Kom ihåg mig ----------
+  function remember(auth) {
+    try { localStorage.setItem(STORE, JSON.stringify({ salt: auth.salt, iter: auth.iter, keyRaw: auth.keyRaw, token: auth.token })); } catch {}
+  }
+  function forget() { try { localStorage.removeItem(STORE); } catch {} }
+  function isRemembered() { try { return !!localStorage.getItem(STORE); } catch { return false; } }
+  async function loadRemembered(meta) {
+    try {
+      const r = JSON.parse(localStorage.getItem(STORE));
+      if (!r || r.salt !== meta.salt) return null;
+      return await authFromRaw(r.salt, r.iter, r.keyRaw, r.token);
+    } catch { return null; }
+  }
+
+  // ---------- Server ----------
+  async function api(method, path, auth, body) {
+    const headers = { 'content-type': 'application/json' };
+    if (auth) headers.authorization = 'Bearer ' + auth.token;
+    const res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
+    let data = null; try { data = await res.json(); } catch {}
+    return { status: res.status, ok: res.ok, data };
+  }
+
+  async function openDoc(auth) {
+    const r = await api('GET', '/api/doc', auth);
+    if (r.status === 401) return false;
+    if (!r.ok) throw new Error('Serverfel (' + r.status + ')');
+    editor.innerHTML = await decrypt(auth, r.data);
+    state.auth = auth;
+    state.version = r.data.version;
+    setStatus('Sparat', 'saved');
+    show('app');
+    editor.focus();
+    return true;
+  }
+
+  // ---------- Start ----------
+  let meta = null;
+  async function start() {
+    if (!window.crypto || !crypto.subtle) {
+      show('lock'); $('lockErr').textContent = 'Webbläsaren saknar stöd för kryptering (kräver https).';
+      $('lockBtn').disabled = true; return;
+    }
+    const r = await api('GET', '/api/meta');
+    if (!r.ok) { show('lock'); $('lockErr').textContent = 'Kunde inte nå servern.'; $('lockBtn').disabled = true; return; }
+    meta = r.data;
+
+    if (!meta.initialized) {
+      $('lockHint').textContent = 'Första gången. Välj ett lösenord (gärna en lång fras) som skyddar innehållet.';
+      $('pw').autocomplete = 'new-password';
+      $('pw2').hidden = false; $('pw2').required = true;
+      $('lockBtn').textContent = 'Skapa';
+      show('lock'); $('pw').focus();
+      return;
+    }
+    const saved = await loadRemembered(meta);
+    if (saved) {
+      try { if (await openDoc(saved)) return; } catch {}
+      forget();
+    }
+    show('lock'); $('pw').focus();
+  }
+
+  $('lockForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const pw = $('pw').value, err = $('lockErr'), btn = $('lockBtn');
+    err.textContent = '';
+    if (!meta.initialized && pw !== $('pw2').value) { err.textContent = 'Lösenorden matchar inte.'; return; }
+    btn.disabled = true; const label = btn.textContent; btn.textContent = 'Arbetar…';
+    try {
+      if (!meta.initialized) {
+        const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
+        const auth = await deriveAuth(pw, salt, ITERATIONS);
+        const html = '<h1>Backlogen</h1><p>Börja skriva här…</p>';
+        const r = await api('POST', '/api/doc', null, { salt, iter: ITERATIONS, token: auth.token, ...(await encrypt(auth, html)) });
+        if (r.status === 409) { err.textContent = 'Sidan har redan skapats. Ladda om.'; return; }
+        if (!r.ok) throw new Error('Serverfel (' + r.status + ')');
+        meta = { initialized: true, salt, iter: ITERATIONS };
+        if (!(await openDoc(auth))) throw new Error('Kunde inte öppna');
+        if ($('remember').checked) remember(auth);
+      } else {
+        const auth = await deriveAuth(pw, meta.salt, meta.iter);
+        if (!(await openDoc(auth))) { err.textContent = 'Fel lösenord.'; return; }
+        if ($('remember').checked) remember(auth);
+      }
+      $('pw').value = $('pw2').value = '';
+    } catch (ex) {
+      err.textContent = ex.message || 'Något gick fel.';
+    } finally {
+      btn.disabled = false; btn.textContent = label;
+    }
+  });
+
+  // ---------- Spara ----------
+  function setStatus(text, cls) { const s = $('status'); s.textContent = text; s.className = cls || ''; }
+
+  function scheduleSave() {
+    state.dirty = true;
+    setStatus('Osparade ändringar', 'dirty');
+    clearTimeout(state.timer);
+    state.timer = setTimeout(save, AUTOSAVE_MS);
+  }
+
+  async function save(newAuth) {
+    clearTimeout(state.timer);
+    if (state.saving) {
+      if (!newAuth) { state.timer = setTimeout(save, 500); return; }
+      while (state.saving) await new Promise(r => setTimeout(r, 100));
+    }
+    if (!state.dirty && !newAuth) return;
+    state.saving = true;
+    state.dirty = false;
+    setStatus('Sparar…');
+    try {
+      const target = newAuth || state.auth;
+      const body = { ...(await encrypt(target, editor.innerHTML)), baseVersion: state.version };
+      if (newAuth) body.newAuth = { salt: newAuth.salt, iter: newAuth.iter, token: newAuth.token };
+      const r = await api('PUT', '/api/doc', state.auth, body);
+
+      if (r.status === 409) {
+        state.dirty = true;
+        const overwrite = confirm('Sidan har ändrats på en annan enhet sedan du öppnade den.\n\n' +
+          'OK = skriv över med din version\nAvbryt = ladda om och visa den senaste versionen (dina senaste ändringar försvinner)');
+        if (overwrite) { state.version = r.data.version; state.saving = false; return save(newAuth); }
+        state.dirty = false; location.reload(); return;
+      }
+      if (r.status === 401) {
+        state.dirty = false; forget();
+        alert('Lösenordet har ändrats på en annan enhet. Logga in igen.');
+        location.reload(); return;
+      }
+      if (!r.ok) throw new Error('Serverfel (' + r.status + ')');
+
+      state.version = r.data.version;
+      if (newAuth) { state.auth = newAuth; meta.salt = newAuth.salt; meta.iter = newAuth.iter; }
+      if (!state.dirty) setStatus('Sparat ' + new Date().toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' }), 'saved');
+      return true;
+    } catch (ex) {
+      state.dirty = true;
+      setStatus('Kunde inte spara – försöker igen', 'dirty');
+      state.timer = setTimeout(save, 5000);
+      if (newAuth) throw ex;
+    } finally {
+      state.saving = false;
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); if (state.dirty) save(); }
+  });
+  window.addEventListener('beforeunload', e => { if (state.dirty || state.saving) { e.preventDefault(); e.returnValue = ''; } });
+
+  // ---------- Redigering ----------
+  editor.addEventListener('input', scheduleSave);
+  editor.addEventListener('paste', e => {
+    e.preventDefault();
+    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+  });
+  editor.addEventListener('click', e => {
+    const a = e.target.closest('a');
+    if (a && (e.ctrlKey || e.metaKey)) window.open(a.href, '_blank', 'noopener');
+  });
+  document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => {
+    document.execCommand(b.dataset.cmd); editor.focus(); scheduleSave();
+  }));
+  document.querySelectorAll('[data-block]').forEach(b => b.addEventListener('click', () => {
+    document.execCommand('formatBlock', false, b.dataset.block); editor.focus(); scheduleSave();
+  }));
+  $('linkBtn').addEventListener('click', () => {
+    const url = prompt('Länkadress:', 'https://');
+    if (url) { document.execCommand('createLink', false, url); scheduleSave(); }
+    editor.focus();
+  });
+
+  // ---------- Lösenord / utloggning ----------
+  const dlg = $('pwDialog');
+  $('pwBtn').addEventListener('click', () => { $('pwErr').textContent = ''; dlg.showModal(); $('newPw').focus(); });
+  $('pwCancel').addEventListener('click', () => dlg.close());
+  $('pwForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const a = $('newPw').value, b = $('newPw2').value, btn = $('pwSubmit');
+    if (a !== b) { $('pwErr').textContent = 'Lösenorden matchar inte.'; return; }
+    btn.disabled = true;
+    try {
+      const salt = b64(crypto.getRandomValues(new Uint8Array(16)));
+      const newAuth = await deriveAuth(a, salt, ITERATIONS);
+      const wasRemembered = isRemembered();
+      if (await save(newAuth)) {
+        if (wasRemembered) remember(newAuth); else forget();
+        $('newPw').value = $('newPw2').value = '';
+        dlg.close();
+        setStatus('Lösenordet är bytt', 'saved');
+      }
+    } catch (ex) {
+      $('pwErr').textContent = 'Kunde inte byta lösenord: ' + (ex.message || ex);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $('logoutBtn').addEventListener('click', async () => {
+    if (state.dirty) await save();
+    forget();
+    location.reload();
+  });
+
+  start();
+})();
+</script>
+</body>
+</html>
